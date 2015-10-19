@@ -52,13 +52,25 @@ typedef struct {
 
 
 // Function declaration
+// Reading 256 characters
 void read_256(char *hints, char *buf);
+
+// Exiting with error information
 void err_exit(int err_num);
 
 
+// Macro definition
+// Max user name size
 #define NAME_LEN 256
+
+// Timeout second
 #define TIMEOUT_SEC 3
+
+// Timeout millisecond
 #define TIMEOUT_MS 0
+
+// Connecting retry times
+#define RETRY_TIME 5
 
 
 // main
@@ -66,7 +78,7 @@ int main(int argc, char *argv[])
 {
     // Fetch server name and port as command line arguments
     // Only accept laboratory.comsys.rwth-aachen.de as server name,
-    // and 2345 as port.
+    // and 2345 as port number.
     char *server_name;
     uint16_t port_num;
 
@@ -77,8 +89,8 @@ int main(int argc, char *argv[])
     }
     else
     {
-         server_name = argv[1];
-         port_num = atoi(argv[2]);
+        server_name = argv[1];
+        port_num = atoi(argv[2]);
     }
 
 
@@ -97,7 +109,7 @@ int main(int argc, char *argv[])
     uint8_t last_name_len = (uint8_t) strlen(last_name) - 1;
 
 
-    // Setting address information
+    // Getting address information
     printf("Fetching server information...\n");
     struct addrinfo *server_addrinfo, hint = {
         AI_ADDRCONFIG,
@@ -105,7 +117,8 @@ int main(int argc, char *argv[])
         0, IPPROTO_TCP, 0, NULL, NULL, NULL
     };
 
-    int err = 1, err_count = 3;
+    // Trying to fetch server infomation for max. RETRY_TIME times
+    int err = 1, err_count = RETRY_TIME;
     while (err && err_count--)
         err = getaddrinfo(server_name, NULL, &hint, &server_addrinfo);
     if (err && err_count == 0)
@@ -116,10 +129,13 @@ int main(int argc, char *argv[])
 
     uint32_t *in_addr =
         &((struct sockaddr_in *)server_addrinfo->ai_addr)->sin_addr.s_addr;
+
+    // Assembled address structure for sending request
     struct sockaddr_in server_addr = {
         AF_INET,
         htons(port_num),
-        *in_addr
+        {*in_addr},
+        {0}    // zero-padding
     };
     char abuf[INET_ADDRSTRLEN];
     const char *addr = inet_ntop(AF_INET, in_addr, abuf, INET_ADDRSTRLEN);
@@ -151,77 +167,108 @@ int main(int argc, char *argv[])
     freeaddrinfo(server_addrinfo);
 
 
-    // Setting socket
-    int socket_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (socket_fd == -1)
-        err_exit(errno);
-    struct timeval timeout = {TIMEOUT_SEC, TIMEOUT_MS};
-    setsockopt(socket_fd, IPPROTO_TCP, SO_RCVTIMEO, &timeout, sizeof(timeout));
+    // Network operation
+    int attempt_times = RETRY_TIME;
+    joker_info *recv_data;
+    uint32_t joke_len;
 
-
-    // Setting up connection
-    printf("Connecting...\n");
-    err = 1, err_count = 3;
-    while (err && err_count--)
-        err = connect(socket_fd,
-                (struct sockaddr *)&server_addr,
-                sizeof(server_addr));
-    if (err && err_count == 0)
-        err_exit(errno);
-    printf("Connected!\n");
-
-
-    // Sending data
-    printf("Sending data...\n");
-    err = 1, err_count = 3;
-    while (err && err_count--)
-        err = send(socket_fd, send_buf, send_buf_size, MSG_NOSIGNAL);
-    if (err && err_count == 0)
-        err_exit(errno);
-    printf("Done!\n");
-
-
-    // Preparing receiving buf
-    printf("Receiving data...\n");
-    uint16_t recv_buf_size = ~0;
-    uint8_t *recv_buf = (uint8_t *)malloc(recv_buf_size);
-    if (recv_buf == NULL)
-        err_exit(errno);
-
-    // Receiving data
-    size_t recv_size = 0;
-    int recv_times = 0, ret_value;
-    for ( ; recv_times < 10; recv_times++)
+    while (attempt_times)
     {
-        ret_value = recv(socket_fd, recv_buf + recv_size,
-                recv_buf_size - recv_size, MSG_WAITALL);
-        if (ret_value == -1)
+        // Setting socket
+        int socket_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+        if (socket_fd == -1)
             err_exit(errno);
+
+        // Setting 3 seconds timeout
+        struct timeval timeout = {TIMEOUT_SEC, TIMEOUT_MS};
+        setsockopt(socket_fd, IPPROTO_TCP, SO_RCVTIMEO, &timeout, sizeof(timeout));
+
+
+        // Setting up connection
+        printf("Connecting...\n");
+        err = 1, err_count = 3;
+        while (err && err_count--)
+            err = connect(socket_fd,
+                    (struct sockaddr *)&server_addr,
+                    sizeof(server_addr));
+        if (err && err_count == 0)
+            err_exit(errno);
+        printf("Connected!\n");
+
+
+        // Sending data
+        printf("Sending data...\n");
+        err = -1, err_count = RETRY_TIME;
+        while (err == -1 && err_count)
+        {
+            err = send(socket_fd, send_buf, send_buf_size, MSG_NOSIGNAL);
+            err_count--;
+        }
+        if (err == -1 && err_count == 0)
+            err_exit(errno);
+        printf("Sent!\n");
+
+
+        // Preparing receiving buf
+        uint16_t recv_buf_size = ~0;
+        uint8_t *recv_buf = (uint8_t *)malloc(recv_buf_size);
+        if (recv_buf == NULL)
+            err_exit(errno);
+
+        // Receiving data, call recv for 10 times
+        printf("Receiving data...\n");
+        size_t recv_size = 0;
+        int recv_times = 0, ret_value;
+        for ( ; recv_times < 10; recv_times++)
+        {
+            ret_value = recv(socket_fd, recv_buf + recv_size,
+                    recv_buf_size - recv_size, 0);
+            if (ret_value == -1)
+                err_exit(errno);
+            else
+                recv_size += ret_value;
+        }
+
+        // Getting data information
+        recv_data = (joker_info *)recv_buf;
+
+        // Free some resources
+        free(recv_buf);
+        close(socket_fd);
+
+        if (recv_size < 5
+            || (joke_len = ntohl(recv_data->length)) + 5 > (uint32_t)recv_size)
+        {
+            printf("\n  --!!**!!-- Warning! --!!**!!--\n");
+            printf("  Some data is lost because of connection lost,\n");
+            printf("  only part of the joke could be shown, try again.\n");
+            printf("  Attempt left: %d\n\n", --attempt_times);
+            if (attempt_times == 0)
+            {
+                fprintf(stderr, "Failed for %d times, exit with error.\n",
+                        RETRY_TIME);
+                exit(-1);
+            }
+        }
         else
-            recv_size += ret_value;
+            break;
     }
 
-    joker_info *recv_data = (joker_info *)recv_buf;
-    uint32_t joke_len = ntohl(recv_data->length);
 
-
-    // Printing the joke
+    // Slicing the joke out of the memory block
     char *joke_begin = (char *)(recv_data + 1);
     char *joke = (char *)malloc(joke_len);
     if (joke == NULL)
         err_exit(errno);
-
     memcpy(joke, joke_begin, joke_len);
-    printf("%s\n", joke);
 
-    printf("\n\nFinished! HAHAHA...\n");
+    printf("Here is the joke:\n%s\n\n", joke);
 
 
     // Free allocated memory
     free(send_buf);
-    free(recv_buf);
+    free(joke);
 
-    close(socket_fd);
 
     return 0;
 }
