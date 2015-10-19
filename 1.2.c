@@ -110,14 +110,14 @@ int main(int argc, char *argv[])
 
 
     // Getting address information
-    printf("Fetching server information...\n");
+    printf("\nFetching server information...\n");
     struct addrinfo *server_addrinfo, hint = {
         AI_ADDRCONFIG,
         AF_INET,
         0, IPPROTO_TCP, 0, NULL, NULL, NULL
     };
 
-    // Trying to fetch server infomation for max. RETRY_TIME times
+    // Trying to fetch server information for max. RETRY_TIME times
     int err = 1, err_count = RETRY_TIME;
     while (err && err_count--)
         err = getaddrinfo(server_name, NULL, &hint, &server_addrinfo);
@@ -172,6 +172,7 @@ int main(int argc, char *argv[])
     joker_info *recv_data;
     uint32_t joke_len;
 
+
     while (attempt_times)
     {
         // Setting socket
@@ -181,27 +182,17 @@ int main(int argc, char *argv[])
 
         // Setting 3 seconds timeout
         struct timeval timeout = {TIMEOUT_SEC, TIMEOUT_MS};
-        setsockopt(socket_fd, IPPROTO_TCP, SO_RCVTIMEO, &timeout, sizeof(timeout));
+        setsockopt(socket_fd, IPPROTO_TCP, SO_RCVTIMEO,
+                &timeout, sizeof(timeout));
 
 
-        // Setting up connection
-        printf("Connecting...\n");
-        err = 1, err_count = 3;
-        while (err && err_count--)
-            err = connect(socket_fd,
-                    (struct sockaddr *)&server_addr,
-                    sizeof(server_addr));
-        if (err && err_count == 0)
-            err_exit(errno);
-        printf("Connected!\n");
-
-
-        // Sending data
-        printf("Sending data...\n");
+        // Sending data via TCP Fast Open
+        printf("\nSending data via TFO...\n");
         err = -1, err_count = RETRY_TIME;
         while (err == -1 && err_count)
         {
-            err = send(socket_fd, send_buf, send_buf_size, MSG_NOSIGNAL);
+            err = sendto(socket_fd, send_buf, send_buf_size, MSG_FASTOPEN,
+                (struct sockaddr *)&server_addr, sizeof(server_addr));
             err_count--;
         }
         if (err == -1 && err_count == 0)
@@ -215,26 +206,25 @@ int main(int argc, char *argv[])
         if (recv_buf == NULL)
             err_exit(errno);
 
+
         // Receiving data, call recv for 10 times
-        printf("Receiving data...\n");
+        printf("\nReceiving data via TFO...\n");
         size_t recv_size = 0;
         int recv_times = 0, ret_value;
+        int addr_len = sizeof(server_addr);
         for ( ; recv_times < 10; recv_times++)
         {
-            ret_value = recv(socket_fd, recv_buf + recv_size,
-                    recv_buf_size - recv_size, 0);
+            ret_value = recvfrom(socket_fd, recv_buf + recv_size,
+                    recv_buf_size - recv_size, MSG_FASTOPEN,
+                    (struct sockaddr *)&server_addr,
+                    (socklen_t *)&addr_len);
             if (ret_value == -1)
                 err_exit(errno);
             else
                 recv_size += ret_value;
         }
 
-        // Getting data information
         recv_data = (joker_info *)recv_buf;
-
-        // Free some resources
-        free(recv_buf);
-        close(socket_fd);
 
         if (recv_size < 5
             || (joke_len = ntohl(recv_data->length)) + 5 > (uint32_t)recv_size)
@@ -251,23 +241,34 @@ int main(int argc, char *argv[])
             }
         }
         else
-            break;
+        {
+            // Getting data
+            recv_data = (joker_info *)malloc(joke_len + 5);
+            memcpy(recv_data, recv_buf, joke_len + 5);
+             attempt_times = 0;
+        }
+
+        // Free some resources
+        free(recv_buf);
+        close(socket_fd);
     }
 
 
     // Slicing the joke out of the memory block
     char *joke_begin = (char *)(recv_data + 1);
-    char *joke = (char *)malloc(joke_len);
+    char *joke = (char *)malloc(joke_len + 1);
     if (joke == NULL)
         err_exit(errno);
     memcpy(joke, joke_begin, joke_len);
+    joke[joke_len] = '\0';
 
-    printf("Here is the joke:\n%s\n\n", joke);
+    printf("\nHere is the joke:\n%s\n\n", joke);
 
 
     // Free allocated memory
     free(send_buf);
     free(joke);
+    free(recv_data);
 
 
     return 0;
