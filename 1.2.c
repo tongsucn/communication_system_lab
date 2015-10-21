@@ -2,7 +2,7 @@
  * Communication Systems Lab
  * Assignment 1
  * Task 1.2
- * Author: Tong
+ * Author: Tong, Michael
  *
  * */
 
@@ -109,8 +109,8 @@ int main(int argc, char *argv[])
     uint8_t last_name_len = (uint8_t) strlen(last_name) - 1;
 
 
-    // Getting address information
-    printf("\nFetching server information...\n");
+    // Resolving address information
+    printf("\nResolving server information...\n");
     struct addrinfo *server_addrinfo, hint = {
         AI_ADDRCONFIG,
         AF_INET,
@@ -130,6 +130,7 @@ int main(int argc, char *argv[])
     uint32_t *in_addr =
         &((struct sockaddr_in *)server_addrinfo->ai_addr)->sin_addr.s_addr;
 
+
     // Assembled address structure for sending request
     struct sockaddr_in server_addr = {
         AF_INET,
@@ -140,7 +141,6 @@ int main(int argc, char *argv[])
     char abuf[INET_ADDRSTRLEN];
     const char *addr = inet_ntop(AF_INET, in_addr, abuf, INET_ADDRSTRLEN);
     printf("Server address: %s\n", addr);
-
 
     // Assembling request head
     joker_request req = {
@@ -167,15 +167,16 @@ int main(int argc, char *argv[])
     freeaddrinfo(server_addrinfo);
 
 
-    // Network operation
+    // Network operation prepare
     int attempt_times = RETRY_TIME;
     joker_info *recv_data;
     uint32_t joke_len;
 
 
+    // Communication loop
     while (attempt_times)
     {
-        // Setting socket
+        // Setting up socket
         int socket_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
         if (socket_fd == -1)
             err_exit(errno);
@@ -201,14 +202,14 @@ int main(int argc, char *argv[])
 
 
         // Preparing receiving buf
-        uint16_t recv_buf_size = ~0;
+        uint16_t recv_buf_size = ~0;    // 65536 bytes
         uint8_t *recv_buf = (uint8_t *)malloc(recv_buf_size);
         if (recv_buf == NULL)
             err_exit(errno);
 
 
-        // Receiving data, call recv for 10 times
-        printf("\nReceiving data via TFO...\n");
+        // Receiving data, call recvfrom for 10 times
+        printf("\nReceiving data via TFO...\nCalling recvfrom for 10 times\n");
         size_t recv_size = 0;
         int recv_times = 0, ret_value;
         int addr_len = sizeof(server_addr);
@@ -233,6 +234,7 @@ int main(int argc, char *argv[])
             printf("  Some data is lost because of connection lost,\n");
             printf("  only part of the joke could be shown, try again.\n");
             printf("  Attempt left: %d\n\n", --attempt_times);
+
             if (attempt_times == 0)
             {
                 fprintf(stderr, "Failed for %d times, exit with error.\n",
@@ -245,11 +247,12 @@ int main(int argc, char *argv[])
             // Getting data
             recv_data = (joker_info *)malloc(joke_len + 5);
             memcpy(recv_data, recv_buf, joke_len + 5);
-             attempt_times = 0;
+            attempt_times = 0;
         }
 
         // Free some resources
         free(recv_buf);
+        shutdown(socket_fd, SHUT_RDWR);
         close(socket_fd);
     }
 
