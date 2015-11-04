@@ -1,0 +1,16 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools" tools:context=".MainActivity">
+
+    <item android:id="@+id/action_english" android:title="@string/action_english"
+        android:orderInCategory="100" app:showAsAction="never" />
+
+    <item android:id="@+id/action_german" android:title="@string/action_german"
+        android:orderInCategory="100" app:showAsAction="never" />
+
+    <item android:id="@+id/action_compressed" android:title="@string/action_compressed"
+        android:orderInCategory="100" app:showAsAction="never" />
+
+    <item android:id="@+id/action_uncompressed" android:title="@string/action_uncompressed"
+        android:orderInCategory="100" app:showAsAction="never" />
+</menu>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <group android:checkableBehavior="single">
+        <item android:id="@+id/action_mensa_academica" android:title="@string/action_mensa_academica" />
+        <item android:id="@+id/action_mensa_ahornstrasse" android:title="@string/action_mensa_ahornstrasse" />
+        <item android:id="@+id/action_mensa_templergraben" android:title="@string/action_mensa_templergraben" />
+        <item android:id="@+id/action_mensa_bayernallee" android:title="@string/action_mensa_bayernallee" />
+        <item android:id="@+id/action_mensa_eupener" android:title="@string/action_mensa_eupener" />
+        <item android:id="@+id/action_mensa_goethestrasse" android:title="@string/action_mensa_goethestrasse" />
+        <item android:id="@+id/action_mensa_vita" android:title="@string/action_mensa_vita" />
+        <item android:id="@+id/action_mensa_cafete" android:title="@string/action_mensa_cafete" />
+        <item android:id="@+id/action_mensa_juelich" android:title="@string/action_mensa_juelich" />
+    </group>
+
+</menu>

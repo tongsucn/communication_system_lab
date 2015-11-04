@@ -1,0 +1,21 @@
+<resources>
+    <string name="app_name">RWTH MENSA</string>
+
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+
+    <string name="action_english">English</string>
+    <string name="action_german">German</string>
+    <string name="action_compressed">Compressed</string>
+    <string name="action_uncompressed">Uncompressed</string>
+
+    <string name="action_mensa_academica">Academica</string>
+    <string name="action_mensa_ahornstrasse">Ahornstraße</string>
+    <string name="action_mensa_templergraben">Bistro Templergraben</string>
+    <string name="action_mensa_bayernallee">Bayernallee</string>
+    <string name="action_mensa_eupener">Eupener Straße</string>
+    <string name="action_mensa_goethestrasse">Goethestraße</string>
+    <string name="action_mensa_vita">Mensa Vita</string>
+    <string name="action_mensa_cafete">Forum Cafete</string>
+    <string name="action_mensa_juelich">Mensa Jülich</string>
+</resources>
