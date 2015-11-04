@@ -5,6 +5,8 @@
 # Author: Tong, Michael
 # ##############################
 # Description:
+# Used to test proxy server.
+# Usage: python2 proxy_test.py
 #
 
 import urllib2

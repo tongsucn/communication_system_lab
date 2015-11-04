@@ -5,6 +5,7 @@
 # Author: Tong, Michael
 # ##############################
 # Description:
+# Simple http proxy server with compression function.
 #
 
 # Asynchronous IO support

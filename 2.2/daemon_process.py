@@ -76,7 +76,7 @@ class DaemonProcess(object):
                              % (err.errno, err.strerror))
             sys.exit(1)
 
-        # Redirecting standard file desciptors
+        # Redirecting standard IO desciptors
         sys.stdout.flush()
         sys.stderr.flush()
         null_in = open(self.stdin, 'r')
