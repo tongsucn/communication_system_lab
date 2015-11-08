@@ -29,16 +29,16 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
-    public static final String PREFS_NAME = "SharedPreferences";
+    private static final String PREFS_NAME = "SharedPreferences";
 
-    int mensaNumber = 0;
-    String mensaTitle = "Academica";
-    Boolean useEnglish = true;
-    Boolean compressed = false;
+    private int mensaNumber = 0;
+    private String mensaTitle = "Academica";
+    private Boolean useEnglish = true;
+    private Boolean compressed = false;
 
     private int currentDay = 0;
-    List<Weekday> weekdays = new ArrayList<>();
-    HTTPRequest request = new HTTPRequest();
+    private List<Weekday> weekdays = new ArrayList<>();
+    private final HTTPRequest request = new HTTPRequest();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,7 +78,7 @@ public class MainActivity extends AppCompatActivity
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
 
-        // Restore prefereces.
+        // Restore preferences.
         SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
         this.mensaNumber = settings.getInt("mensaNumber", 0);
         this.request.setActiveUrl(this.mensaNumber);

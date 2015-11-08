@@ -6,18 +6,19 @@ import java.lang.String;
 
 /**
  * Created by michi on 02.11.2015.
+ * Property class to represent the available food for a specific weekday.
  */
-public class Weekday {
-    String day; // e.g. "montag" (in german).
-    String date; // e.g. "Monday November 02, 2015".
-    List<Dish> dishes; // e.g. "No data available for this period!".
+class Weekday {
+    private String day; // e.g. "montag" (in german).
+    private String date; // e.g. "Monday November 02, 2015".
+    private final List<Dish> dishes; // e.g. "No data available for this period!".
     private String note;
 
     public Weekday() {
         this.day = "";
         this.date = "";
         this.note = "";
-        this.dishes = new ArrayList<Dish>();
+        this.dishes = new ArrayList<>();
     }
 
     public void setDay(String day) {

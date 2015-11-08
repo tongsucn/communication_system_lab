@@ -24,11 +24,11 @@ import java.util.Scanner;
  * Created by michael deutschen, tong su on 29.10.2015.
  * Send HTTPRequest to specified website and parse it into List<Weekday> format.
  */
-public class HTTPRequest {
+class HTTPRequest {
 
     // URLs whose content we want to parse. Only add the german url's, because the english one's are derived from them.
     private int activeUrl;
-    private String[] urls = {"http://www.studentenwerk-aachen.de/speiseplaene/academica-w.html",
+    private final String[] urls = {"http://www.studentenwerk-aachen.de/speiseplaene/academica-w.html",
                             "http://www.studentenwerk-aachen.de/speiseplaene/ahornstrasse-w.html",
                             "http://www.studentenwerk-aachen.de/speiseplaene/templergraben-w.html",
                             "http://www.studentenwerk-aachen.de/speiseplaene/bayernallee-w.html",
@@ -39,19 +39,19 @@ public class HTTPRequest {
                             "http://www.studentenwerk-aachen.de/speiseplaene/juelich-w.html"};
 
     // Decide which language should be parsed. True = english. False = german.
-    Boolean englishLanguage;
+    private Boolean englishLanguage;
 
     // Decide if compression should be used. If true, a proxy is used.
-    Boolean compressed;
+    private Boolean compressed;
 
     // List of (usually 10) weekdays, which itself contain the dishes of the day.
-    List<Weekday> weekdays;
+    private List<Weekday> weekdays;
 
     // Variables needed for parsing.
-    Weekday weekday;
-    Dish dish;
-    String whatsNext;   // Defines what the parser expects as the next text (category, menu, price or extra).
-    String lastText;    // Ugly variable that stores the last read text. Needed to catch the date.
+    private Weekday weekday;
+    private Dish dish;
+    private String whatsNext;   // Defines what the parser expects as the next text (category, menu, price or extra).
+    private String lastText;    // Ugly variable that stores the last read text. Needed to catch the date.
 
     // Constructor.
     public HTTPRequest() {
@@ -80,7 +80,7 @@ public class HTTPRequest {
     }
 
     // Receive InputStream from Website and convert InputStream to String.
-    public String convertInputStreamToString() throws IOException {
+    private String convertInputStreamToString() throws IOException {
         InputStream inputStream = this.getInputStream();
 
         BufferedReader r = new BufferedReader(new InputStreamReader(inputStream));
@@ -112,12 +112,11 @@ public class HTTPRequest {
     }
 
     // Receiving compressed InputStream from proxy and convert it into String
-    private String convertCompressedInputStreamToString() throws IOException {
+    private String convertCompressedInputStreamToString() {
         // Getting compressed stream
         InputStream inStream = getCompressedInputStream();
-        String res = new Scanner(inStream, "UTF-8").useDelimiter("\\A").next();
 
-        return res;
+        return new Scanner(inStream, "UTF-8").useDelimiter("\\A").next();
     }
 
     // Parse website.
@@ -325,10 +324,12 @@ public class HTTPRequest {
         this.englishLanguage = englishLanguage;
     }
 
+    /*
     // Get the language. True = english. False = german.
     public Boolean getLanguage() {
         return this.englishLanguage;
     }
+    */
 
     // Get the current url in the correct language.
     private String getUrl() {

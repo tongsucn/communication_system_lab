@@ -4,6 +4,9 @@
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
 
+    <string name="button_label_left">&lt;</string>
+    <string name="button_label_right">&gt;</string>
+
     <string name="action_english">English</string>
     <string name="action_german">German</string>
     <string name="action_compressed">Compressed</string>
