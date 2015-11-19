@@ -1,13 +1,4 @@
-#
-# Communication Systems Lab
-# Assignment 2
-# Task 2.2
-# ##############################
-# Description:
-# Parent class for creating a daemon process
-# Under the guidance of "Advanced Programming in the UNIX Environment"
-# and http://goo.gl/2k86Xd
-#
+#!/usr/bin/env python3
 
 import os, sys, time
 # Cleaning job at exit
@@ -66,7 +57,7 @@ class DaemonProcess(object):
         # Setting umask to 0
         os.umask(0)
 
-        #
+        # Second fork
         try:
             pid = os.fork()
             if pid > 0:
@@ -90,6 +81,11 @@ class DaemonProcess(object):
         atexit.register(self.del_pidfile)
         pid = str(os.getpid())
         # Keeping occupying the PID file
+        dir_name = os.path.split(self.pid_file)[0]
+        if not os.path.exists(dir_name):
+            with open('/home/ubuntu/2.5.txt', 'w') as f:
+                pass
+            os.path.makedirs(dir_name)
         open(self.pid_file, 'w+').write('%s\n' % pid)
 
 

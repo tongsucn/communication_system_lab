@@ -40,7 +40,7 @@ class SensorNetServer(DaemonProcess):
         self.event_loop = asyncio.get_event_loop()
 
         # Server setting
-        self.host = '127.0.0.1'
+        self.host = '0.0.0.0' # Please firstly check ifconfig
         self.port = port
 
         self.server = self.event_loop.create_datagram_endpoint(
@@ -49,8 +49,8 @@ class SensorNetServer(DaemonProcess):
 
     def run(self):
         """
-         Overriding the run function in parent class.
-         The event loop begins from here.
+        Overriding the run function in parent class.
+        The event loop begins from here.
         """
 
         # Generating asynchronous server object

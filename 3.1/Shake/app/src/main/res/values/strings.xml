@@ -1,0 +1,13 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="app_name">Shake</string>
+
+    <string name="accelerometer">Accelerometer</string>
+
+    <string name="gyroscope">Gyroscope</string>
+
+    <string name="magnetometer">Magnetometer</string>
+
+    <string name="barometer">Barometer</string>
+
+    <string name="noSensor" tools:ignore="UnusedResources">Sensor is not available.</string>
+</resources>

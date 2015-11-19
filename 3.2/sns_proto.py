@@ -13,10 +13,12 @@ import asyncio
 import time
 import struct
 
+import logging
+
 
 class SensorNetProtocol(asyncio.DatagramProtocol):
     """
-    Sensor Network Protocol. Based on datagram protocol.
+    Sensor Network Protocol. Based on asyncio datagram protocol.
     """
 
     def __init__(self):
@@ -42,12 +44,16 @@ class SensorNetProtocol(asyncio.DatagramProtocol):
         # Client pool
         self.client_pool = dict()
 
-        self.ts_key = 'timestamp'
-        self.nm_key = 'name'
-        self.ava_key = 'available'
+        self.ts_key = 'ts'
+        self.nm_key = 'nm'
 
         # Client transport
         self.client_transport = None
+
+        # Initializing logging
+        logging.basicConfig(filename='/var/mysns/%d.log' % int(time.time()),
+                            format='%(asctime)s %(message)s',
+                            level=logging.DEBUG)
 
 
     def connection_made(self, transport):
@@ -70,32 +76,31 @@ class SensorNetProtocol(asyncio.DatagramProtocol):
 
         Args:
             data: A bytes object containing the incoming data.
-            addr:
-                The address of the peer sending the data.
-
-        Returns:
-            The parsed data, list type, the first element indicate the type of
-            this data:
-                IGN:        Ignore
-                REFRESH:    Keep alive signal
-                REG:        Registering
-                UNREG:      Unregristering
-                BRDCST:     Broadcasting
-
+            addr: The address of the peer sending the data.
         """
+
+        logging.debug('Datagram Received, addr: %s, port: %d' % (addr[0], addr[1]))
 
         parsed_data = self._data_parse(data)
         operation = self._operation_select(parsed_data, addr)
-        self._perform_operation(operation, parsed_datta, addr)
+        logging.debug('Operation %d is selected.' % (operation))
+        self._perform_operation(operation, parsed_data, addr)
+
+        logging.debug('Client pool: %s' % (str(self.client_pool)))
 
 
-    async def _data_parse(self, data):
+    def _data_parse(self, data):
         """
         Parsing the incoming data.
 
         Args:
             data: The incoming data.
+
+        Returns:
+            Parsed data.
         """
+
+        logging.debug('Data Parsing.')
 
         data_type = int(data[0])
         res = [data_type]
@@ -103,9 +108,9 @@ class SensorNetProtocol(asyncio.DatagramProtocol):
         if data_type == self.TYPE_REG:
             res.append(int(data[1]))
             res.append(data[2:(2 + int(data[1]))].decode())
-        elif data_type == self.TYPE_UNREG or data_type == self.KEP:
+        elif data_type == self.TYPE_UNREG or data_type == self.TYPE_KEP:
             pass
-        elif data_type == self.EVE:
+        elif data_type == self.TYPE_EVE:
             res.append(data[1:9])
         else:
             res[0] = self.TYPE_UNKN
@@ -113,7 +118,7 @@ class SensorNetProtocol(asyncio.DatagramProtocol):
         return res
 
 
-    async def _operation_select(self, data, addr):
+    def _operation_select(self, data, addr):
         """
         Selecting operation according to parsed data.
 
@@ -130,8 +135,10 @@ class SensorNetProtocol(asyncio.DatagramProtocol):
                 OP_BRDCST  : Broadcasting
         """
 
-        if addr in self.client_pool and self.client_pool[addr][self.ava_key]:
-            if data[0] == self.TYPE_REG or self.TYPE_KEP:
+        logging.debug('Operation Select.')
+
+        if addr in self.client_pool:
+            if data[0] == self.TYPE_REG or data[0] == self.TYPE_KEP:
                 return self.OP_REFRESH
             elif data[0] == self.TYPE_EVE:
                 return self.OP_BRDCST
@@ -139,14 +146,14 @@ class SensorNetProtocol(asyncio.DatagramProtocol):
                 return self.OP_UNREG
             else:
                 return self.OP_IGN
-        elif addr in self.client_pool:
+        else:
             if data[0] == self.TYPE_REG:
                 return self.OP_REG
             else:
                 return self.OP_IGN
 
 
-    async def _perform_operation(self, operation, data, addr):
+    def _perform_operation(self, operation, data, addr):
         """
         Performing operation.
 
@@ -156,7 +163,9 @@ class SensorNetProtocol(asyncio.DatagramProtocol):
             addr: Relative client address.
         """
 
-        if addr in self.client_pool and self.client_pool[addr][self.ava_key]:
+        logging.debug('Performing Operation.')
+
+        if addr in self.client_pool:
             if operation == self.OP_IGN:
                 pass
             elif operation == self.OP_REFRESH:
@@ -166,7 +175,12 @@ class SensorNetProtocol(asyncio.DatagramProtocol):
             elif operation == self.OP_UNREG:
                 self._unreg(addr)
             elif operation == self.OP_BRDCST:
-                await self._broadcast(addr, data[1])
+                self._broadcast(addr, data[1])
+            else:
+                pass
+        else:
+            if operation == self.OP_REG:
+                self._reg(addr, data[2])
             else:
                 pass
 
@@ -179,8 +193,11 @@ class SensorNetProtocol(asyncio.DatagramProtocol):
             addr: The address to be refreshed.
         """
 
-        if addr in self.client_pool and self.client_pool[addr][self.ava_key]:
-            self.client_pool[addr]['timestamp'] = time.time()
+        logging.debug('Refresh Operation.')
+
+        if addr in self.client_pool:
+            self.client_pool[addr][self.ts_key] = time.time()
+
 
 
     def _reg(self, addr, name):
@@ -192,14 +209,14 @@ class SensorNetProtocol(asyncio.DatagramProtocol):
             name: The name of the client.
         """
 
+        logging.debug('Registering Operation.')
+
         if addr in self.client_pool:
             self.client_pool[addr][self.ts_key] = time.time()
-            self.client_pool[addr][self.ava_key] = True
         else:
             self.client_pool[addr] = dict()
             self.client_pool[addr][self.nm_key] = name
             self.client_pool[addr][self.ts_key] = time.time()
-            self.client_pool[addr][self.ava_key] = True
 
 
     def _unreg(self, addr):
@@ -210,12 +227,13 @@ class SensorNetProtocol(asyncio.DatagramProtocol):
             addr: The address to be unregistered.
         """
 
+        logging.debug('Unregistering Operation.')
+
         if addr in self.client_pool:
-            self.client_pool[addr][self.ava_key] = False
             del self.client_pool[addr]
 
 
-    async def _broadcast(self, addr, ts):
+    def _broadcast(self, addr, ts):
         """
         Broadcasting to all the client except addr.
 
@@ -224,7 +242,9 @@ class SensorNetProtocol(asyncio.DatagramProtocol):
             ts: The event timestamp.
         """
 
-        if addr not in self.client_pool or not self.client_pool[addr][self.ava_key]:
+        logging.debug('Broadcasting')
+
+        if addr not in self.client_pool:
             return
 
         # Assembling data
@@ -233,10 +253,9 @@ class SensorNetProtocol(asyncio.DatagramProtocol):
         data = data + struct.pack('>B', len(self.client_pool[addr][self.nm_key]))
         data = data + self.client_pool[addr][self.nm_key].encode()
 
-        for key, value in self.items():
+        ava_filter = lambda x : (time.time() - x[1][self.ts_key] < 20)
+        self.client_pool = dict(filter(ava_filter, self.client_pool.items()))
+
+        for key, value in self.client_pool.items():
             if key != addr:
-                life = time.time() - value[self.ts_key]
-                if life < 20 and value[self.ava_key]:
-                    self.transport.sendto(data, addr)
-                elif life >= 20:
-                    self._unreg(addr)
+                self.client_transport.sendto(data, addr)
