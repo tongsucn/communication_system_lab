@@ -34,12 +34,29 @@ class SensorNetProtocol(asyncio.DatagramProtocol):
         self.TYPE_EVE   = 4
         self.TYPE_SHK   = 5
 
+        # Data type description
+        self.TYPE = dict()
+        self.TYPE[self.TYPE_UNKN] = 'UNKNOWN'
+        self.TYPE[self.TYPE_REG] = 'REG'
+        self.TYPE[self.TYPE_UNREG] = 'UNREG'
+        self.TYPE[self.TYPE_KEP] = 'KEEPALIVE'
+        self.TYPE[self.TYPE_EVE] = 'EVENT'
+        self.TYPE[self.TYPE_SHK] = 'SHAKE'
+
         # Operation type
         self.OP_IGN     = 0
         self.OP_REFRESH = 1
         self.OP_REG     = 2
         self.OP_UNREG   = 3
         self.OP_BRDCST  = 4
+
+        # Operation description
+        self.OP = dict()
+        self.OP[self.OP_IGN] = 'IGNORE'
+        self.OP[self.OP_REFRESH] = 'REFRESH'
+        self.OP[self.OP_REG] = 'REG'
+        self.OP[self.OP_UNREG] = 'UNREG'
+        self.OP[self.OP_BRDCST] = 'BROADCASTING'
 
         # Client pool
         self.client_pool = dict()
@@ -79,14 +96,21 @@ class SensorNetProtocol(asyncio.DatagramProtocol):
             addr: The address of the peer sending the data.
         """
 
-        logging.debug('Datagram Received, addr: %s, port: %d' % (addr[0], addr[1]))
+        logging.debug('==== Datagram Received, addr: %s, port: %d'
+                      % (addr[0], addr[1]))
 
+        logging.debug('Data Parsing.')
         parsed_data = self._data_parse(data)
+
+        logging.debug('Operation Select.')
         operation = self._operation_select(parsed_data, addr)
-        logging.debug('Operation %d is selected.' % (operation))
+        logging.debug('Operation %s is selected.' % (self.OP[operation]))
+
+        logging.debug('Performing Operation.')
         self._perform_operation(operation, parsed_data, addr)
 
         logging.debug('Client pool: %s' % (str(self.client_pool)))
+        logging.debug('==== Procedure DONE!')
 
 
     def _data_parse(self, data):
@@ -99,8 +123,6 @@ class SensorNetProtocol(asyncio.DatagramProtocol):
         Returns:
             Parsed data.
         """
-
-        logging.debug('Data Parsing.')
 
         data_type = int(data[0])
         res = [data_type]
@@ -135,7 +157,6 @@ class SensorNetProtocol(asyncio.DatagramProtocol):
                 OP_BRDCST  : Broadcasting
         """
 
-        logging.debug('Operation Select.')
 
         if addr in self.client_pool:
             if data[0] == self.TYPE_REG or data[0] == self.TYPE_KEP:
@@ -163,7 +184,6 @@ class SensorNetProtocol(asyncio.DatagramProtocol):
             addr: Relative client address.
         """
 
-        logging.debug('Performing Operation.')
 
         if addr in self.client_pool:
             if operation == self.OP_IGN:
@@ -193,8 +213,6 @@ class SensorNetProtocol(asyncio.DatagramProtocol):
             addr: The address to be refreshed.
         """
 
-        logging.debug('Refresh Operation.')
-
         if addr in self.client_pool:
             self.client_pool[addr][self.ts_key] = time.time()
 
@@ -208,8 +226,6 @@ class SensorNetProtocol(asyncio.DatagramProtocol):
             addr: The address to be registered.
             name: The name of the client.
         """
-
-        logging.debug('Registering Operation.')
 
         if addr in self.client_pool:
             self.client_pool[addr][self.ts_key] = time.time()
@@ -227,8 +243,6 @@ class SensorNetProtocol(asyncio.DatagramProtocol):
             addr: The address to be unregistered.
         """
 
-        logging.debug('Unregistering Operation.')
-
         if addr in self.client_pool:
             del self.client_pool[addr]
 
@@ -241,8 +255,6 @@ class SensorNetProtocol(asyncio.DatagramProtocol):
             addr: The in-coming client address.
             ts: The event timestamp.
         """
-
-        logging.debug('Broadcasting')
 
         if addr not in self.client_pool:
             return
@@ -258,4 +270,4 @@ class SensorNetProtocol(asyncio.DatagramProtocol):
 
         for key, value in self.client_pool.items():
             if key != addr:
-                self.client_transport.sendto(data, addr)
+                self.client_transport.sendto(data, key)

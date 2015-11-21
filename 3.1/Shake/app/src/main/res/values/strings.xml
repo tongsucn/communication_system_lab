@@ -1,4 +1,4 @@
-<resources xmlns:tools="http://schemas.android.com/tools">
+<resources>
     <string name="app_name">Shake</string>
 
     <string name="accelerometer">Accelerometer</string>
@@ -9,5 +9,13 @@
 
     <string name="barometer">Barometer</string>
 
-    <string name="noSensor" tools:ignore="UnusedResources">Sensor is not available.</string>
+    <string name="server_address_label">Server:</string>
+    <string name="port_label">Port:</string>
+    <string name="name_label">Name:</string>
+    <string name="default_server_address">cslectures.tongsucn.com</string>
+    <string name="default_port">8123</string>
+    <string name="default_name">MyName</string>
+    <string name="connect_button">REGISTER</string>
+    <string name="disconnect_button">UNREGISTER</string>
+    <string name="shake_button">Shake</string>
 </resources>

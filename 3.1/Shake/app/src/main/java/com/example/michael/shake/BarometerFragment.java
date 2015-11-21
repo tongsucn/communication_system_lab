@@ -21,8 +21,12 @@ import java.util.ArrayList;
  * Show the barometer parameters.
  */
 public class BarometerFragment extends Fragment {
+    // Used for measuring the drawing time.
+    long startTime, stopTime;
+
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.barometer_frag, container, false);
 
         TextView tv = (TextView) v.findViewById(R.id.tvBarometer);
@@ -47,11 +51,21 @@ public class BarometerFragment extends Fragment {
      * @param llBarometerCanvas LinearLayout of our canvas.
      */
     @SuppressWarnings("deprecation")
-    public void setSensorValues(ArrayList<float[]> listOfNodes, LinearLayout llBarometerCanvas, Resources resources) {
+    public long setSensorValues(ArrayList<float[]> listOfNodes, LinearLayout llBarometerCanvas,
+                                Resources resources, long totalFPS, int count) {
+        // Check if LinearLayout is already there (Can happen when sensorChanged Event is faster
+        // than the layout).
+        if (llBarometerCanvas == null)
+            return -1;
+
+        // Measure the time before drawing (for total draw time)
+        this.startTime = System.currentTimeMillis();
+        
         // Get size of layout.
         float width = llBarometerCanvas.getWidth();
         float height = llBarometerCanvas.getHeight();
-        float horizontalStepSize = width / (listOfNodes.size() + 2); // +2 because we don't want to draw on left/right border.
+        float horizontalStepSize = width / (listOfNodes.size() + 2); // +2 because we don't want to
+        // draw on left/right border.
 
         // Init Paint and Bitmap.
         Paint paint = new Paint();
@@ -89,11 +103,25 @@ public class BarometerFragment extends Fragment {
                     paint);
         }
 
+        // Measure the time after drawing and show the difference on teh display.
+        this.stopTime = System.currentTimeMillis();
+        long currentFPS = 1000 / (stopTime - startTime);
+        totalFPS += currentFPS;
+        count++;
+        paint.setColor(Color.BLACK);
+        canvas.drawText("FPS: " + String.valueOf(currentFPS) + " AVG FPS: "
+                        + String.valueOf(totalFPS / count),
+                10,
+                height - 15,
+                paint);
+
         // Give canvas to layout.
         if(android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.JELLY_BEAN) {
             llBarometerCanvas.setBackgroundDrawable(new BitmapDrawable(resources, bg));
         } else {
             llBarometerCanvas.setBackground(new BitmapDrawable(resources, bg));
         }
+
+        return totalFPS;
     }
 }
