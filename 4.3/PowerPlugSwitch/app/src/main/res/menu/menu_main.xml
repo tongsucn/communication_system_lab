@@ -1,0 +1,24 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context=".MainActivity">
+
+    <item
+        android:id="@+id/action_serveraddress"
+        android:orderInCategory="100"
+        android:title="@string/action_serveraddress"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_serverport"
+        android:orderInCategory="100"
+        android:title="@string/action_serverport"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_refresh"
+        android:orderInCategory="100"
+        android:title="@string/action_refresh"
+        app:showAsAction="never" />
+
+</menu>

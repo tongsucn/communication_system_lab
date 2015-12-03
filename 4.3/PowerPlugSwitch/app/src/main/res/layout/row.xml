@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal">
+
+    <Switch
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/switch_name"
+        android:id="@+id/switchPlug"
+        android:checked="false"
+        android:textSize="30sp"
+        android:focusable="false"
+        android:clickable="false"
+        android:switchMinWidth="60dp" />
+
+    <TextView
+        android:id="@+id/textViewPlug"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/textview_name"
+        android:textSize="30sp"
+        android:focusable="false" />
+</LinearLayout>

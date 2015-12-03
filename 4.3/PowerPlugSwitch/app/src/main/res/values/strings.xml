@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">PowerPlugSwitch</string>
+
+    <string name="action_serveraddress">Set server address</string>
+    <string name="action_serverport">Set server port</string>
+    <string name="action_refresh">Refresh</string>
+
+    <string name="switch_name">Switch</string>
+    <string name="textview_name">TextView</string>
+
+    <string name="saved_serveraddress">serveraddress</string>
+    <string name="saved_serverport">port</string>
+</resources>
