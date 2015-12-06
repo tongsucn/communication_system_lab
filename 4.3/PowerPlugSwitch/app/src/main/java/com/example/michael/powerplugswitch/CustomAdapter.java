@@ -36,7 +36,6 @@ class CustomAdapter extends ArrayAdapter<Plug> {
 
         textViewPlug.setText(this.plugItems[position].getDescription());
         switchPlug.setChecked(this.plugItems[position].getState());
-        switchPlug.setText(this.plugItems[position].getId());
 
         return convertView;
     }

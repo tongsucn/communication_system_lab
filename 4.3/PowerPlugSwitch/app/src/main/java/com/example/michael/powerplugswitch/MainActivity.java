@@ -14,32 +14,35 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
+import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.Spinner;
 import android.widget.Toast;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.InputStreamReader;
-import java.net.MalformedURLException;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.net.URL;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
-
-// TODO: TLS connection.
 
 public class MainActivity extends AppCompatActivity {
     // ListView which contains all plugItems.
     private ListView listView;
     // List of plugItems that are contained in the listView.
     private Plug[] plugItems;
-    // Serveraddress.
+    // Server address.
     private String serveraddress;
     // Server port.
     private int port;
     // SharedPreference (used to store e.g. serveraddress and port).
-    SharedPreferences sharedPreferences;
+    private SharedPreferences sharedPreferences;
+    // Temporal plug. Used to add a plug to the server list.
+    private Plug plug;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,18 +53,21 @@ public class MainActivity extends AppCompatActivity {
 
         // Set initial SharedPreferences.
         this.sharedPreferences = this.getPreferences(Context.MODE_PRIVATE);
-        this.serveraddress = sharedPreferences.getString(getString(R.string.saved_serveraddress), "tongsucn.com");
-        this.port = sharedPreferences.getInt(getString(R.string.saved_serverport), 1234);
+        this.serveraddress = sharedPreferences.getString(getString(R.string.saved_serveraddress), "cslectures.tongsucn.com");
+        this.port = sharedPreferences.getInt(getString(R.string.saved_serverport), 8123);
 
         // Initiate listView.
         this.listView = (ListView) findViewById(R.id.listViewPlug);
-
         this.listView.setOnItemClickListener(new OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 onListViewClick(position);
             }
         });
+
+        // Initiate other objects.
+        this.plug = new Plug();
+        this.plugItems = new Plug[0];
 
         // Get data from server.
         this.refresh();
@@ -80,11 +86,8 @@ public class MainActivity extends AppCompatActivity {
         this.listView.setAdapter(customAdapter);
 
         // Send update to server.
-        new SendAsyncTask().execute(
-                this.serveraddress,
-                String.valueOf(this.port),
-                this.plugItems[position].getId(),
-                this.plugItems[position].getState().toString());
+        this.plug = this.plugItems[position];
+        new SwitchAsyncTask().execute();
     }
 
     /**
@@ -121,6 +124,14 @@ public class MainActivity extends AppCompatActivity {
                 this.refresh();
                 break;
 
+            case R.id.action_add:
+                this.addPlug();
+                break;
+
+            case R.id.action_delete:
+                this.deletePlug();
+                break;
+
             default:
                 break;
         }
@@ -131,7 +142,7 @@ public class MainActivity extends AppCompatActivity {
     /**
      * Edit the server address.
      */
-    public void editServerAddress() {
+    private void editServerAddress() {
         final EditText editTextServerAddress = new EditText(this);
         editTextServerAddress.setText(this.serveraddress);
         editTextServerAddress.setSingleLine(true);
@@ -142,25 +153,12 @@ public class MainActivity extends AppCompatActivity {
                 .setView(editTextServerAddress)
                 .setPositiveButton("Confirm", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int whichButton) {
-                        try {
-                            // Check if input is a valid URL.
-                            String url = editTextServerAddress.getText().toString();
-                            if (!url.startsWith("http://"))
-                                url = "http://" + url;
-                            new URL(url);
+                        serveraddress = editTextServerAddress.getText().toString();
 
-                            serveraddress = url;
-
-                            // Save new address in preferences.
-                            SharedPreferences.Editor editor = sharedPreferences.edit();
-                            editor.putString(getString(R.string.saved_serveraddress), serveraddress);
-                            editor.apply();
-                        } catch (MalformedURLException mue) {
-                            Toast.makeText(getApplicationContext(),
-                                    "Input was not a correct URL",
-                                    Toast.LENGTH_LONG)
-                                    .show();
-                        }
+                        // Save new address in preferences.
+                        SharedPreferences.Editor editor = sharedPreferences.edit();
+                        editor.putString(getString(R.string.saved_serveraddress), serveraddress);
+                        editor.apply();
                     }
                 })
                 .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
@@ -173,7 +171,7 @@ public class MainActivity extends AppCompatActivity {
     /**
      * Edit the server port.
      */
-    public void editServerPort() {
+    private void editServerPort() {
         final EditText editTextServerPort = new EditText(this);
         editTextServerPort.setText(String.valueOf(this.port));
         editTextServerPort.setInputType(InputType.TYPE_CLASS_NUMBER);
@@ -218,89 +216,315 @@ public class MainActivity extends AppCompatActivity {
     /**
      * Refresh the listView with fresh server data.
      */
-    public void refresh() {
-        new ReceiveAsyncTask().execute(
-                this.serveraddress,
-                String.valueOf(this.port));
+    private void refresh() {
+        new ReceiveAsyncTask().execute();
     }
 
     /**
-     * Send data to the server to inform server of update.
+     * Add a plug and send it to the server.
      */
-    private class SendAsyncTask extends AsyncTask<String, Void, String> {
-        protected String doInBackground(String... params) {
+    private void addPlug() {
+        final EditText editTextPlugDescription = new EditText(this);
+        editTextPlugDescription.setText(this.plug.getDescription());
+        editTextPlugDescription.setSingleLine(true);
 
-            String serveraddress = params[0];
-            int port = Integer.parseInt(params[1]);
-            String id = params[2];                          // Plug id.
-            Boolean state = Boolean.valueOf(params[3]);     // true = plug on, false = plug off.
+        new AlertDialog.Builder(this)
+                .setTitle("New plug")
+                .setMessage("Please enter a description for the plug (max. 16 letters)!")
+                .setView(editTextPlugDescription)
+                .setPositiveButton("Confirm", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int whichButton) {
+                        String description = editTextPlugDescription.getText().toString();
 
-            // TODO: work here!
-            /*
+                        // Check that description has a correct length.
+                        if (description.length() > 16) {
+                            Toast.makeText(getApplicationContext(),
+                                    "The description must not be longer than 16 letters!",
+                                    Toast.LENGTH_LONG).show();
+                            return;
+                        } else if (description.isEmpty()) {
+                            Toast.makeText(getApplicationContext(),
+                                    "The description must not be empty!",
+                                    Toast.LENGTH_LONG).show();
+                            return;
+                        }
+
+                        // Check if description does not exist yet.
+                        if (getPlugDescriptions().contains(description)) {
+                            Toast.makeText(getApplicationContext(),
+                                    "The description already exists!",
+                                    Toast.LENGTH_LONG).show();
+                            return;
+                        }
+
+                        plug.setDescription(description);
+                        addPlugSub();
+                    }
+                })
+                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int whichButton) {
+                    }
+                })
+                .show();
+    }
+
+    /**
+     * Submethod of addPlug(). Don't use it!
+     */
+    private void addPlugSub() {
+        final EditText editTextPlugID = new EditText(this);
+        editTextPlugID.setText(this.plug.getId());
+        editTextPlugID.setSingleLine(true);
+        editTextPlugID.setInputType(InputType.TYPE_CLASS_NUMBER);
+
+        new AlertDialog.Builder(this)
+                .setTitle("New plug")
+                .setMessage("Please enter the id of the plug (10 binary digits)!")
+                .setView(editTextPlugID)
+                .setPositiveButton("Confirm", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int whichButton) {
+                        String id = editTextPlugID.getText().toString();
+                        // Check length.
+                        if (id.length() != 10) {
+                            Toast.makeText(getApplicationContext(),
+                                    "The id of the plug must contain 10 binary digits!",
+                                    Toast.LENGTH_LONG).show();
+                            return;
+                        }
+                        // Check if binary.
+                        if (!id.matches("[01]+")) {
+                            Toast.makeText(getApplicationContext(),
+                                    "The id of the plug must only contain binary digits!",
+                                    Toast.LENGTH_LONG).show();
+                            return;
+                        }
+
+                        plug.setId(id);
+
+                        // Send new plug to server.
+                        new PlugAddAsyncTask().execute();
+                    }
+                })
+                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int whichButton) {
+                    }
+                })
+                .show();
+    }
+
+    /**
+     * Delete a plug and send it to a server.
+     */
+    private void deletePlug() {
+        final Spinner spinnerDeletePlug = new Spinner(this);
+        List<String> descriptions = this.getPlugDescriptions();
+
+        ArrayAdapter<String> dataAdapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_dropdown_item, descriptions);
+        dataAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerDeletePlug.setAdapter(dataAdapter);
+
+        new AlertDialog.Builder(this)
+                .setTitle("Delete plug")
+                .setMessage("Please choose the plug which will be deleted!")
+                .setView(spinnerDeletePlug)
+                .setPositiveButton("Confirm", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int whichButton) {
+                        plug = plugItems[(int) spinnerDeletePlug.getSelectedItemId()];
+
+                        // Send the removed plug to server.
+                        new PlugDeleteAsyncTask().execute();
+                    }
+                })
+                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int whichButton) {
+                    }
+                })
+                .show();
+    }
+
+    private List<String> getPlugDescriptions() {
+        List<String> descriptions = new ArrayList<>();
+
+        for (Plug p : this.plugItems)
+            descriptions.add(p.getDescription());
+
+        return descriptions;
+    }
+
+    /**
+     * Send data to the server to inform server of switch.
+     */
+    private class SwitchAsyncTask extends AsyncTask<Void, Void, String> {
+        protected String doInBackground(Void... params) {
             try {
-                Socket socket = new Socket(serveraddress, port);
+                InetAddress inetAddress = InetAddress.getByName(serveraddress);
+
+                Socket socket = new Socket();
+                socket.connect(new InetSocketAddress(inetAddress, port), 10000);
+
+                // Send.
                 DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
-                dataOutputStream.writeUTF(message);
+                String binaryStr = "01" + plug.getId() + (plug.getState() ? "10" : "01") + "00";
+                Short s = Short.parseShort(binaryStr, 2);
+                dataOutputStream.writeShort(s);
+
                 socket.close();
             } catch (Exception e) {
                 return e.toString();
             }
-            */
-            return "Successfully changed the plug";
+
+            // Success.
+            return null;
         }
 
         protected void onPostExecute(String result) {
-            Toast.makeText(MainActivity.this.getApplicationContext(), result, Toast.LENGTH_LONG).show();
+            if (result != null)
+                Toast.makeText(MainActivity.this.getApplicationContext(),
+                        "Could not switch the plug: \n" + result,
+                        Toast.LENGTH_LONG).show();
+            else
+                MainActivity.this.refresh();
         }
     }
 
     /**
      * Receive data from server and updates the listView.
      */
-    private class ReceiveAsyncTask extends AsyncTask<String, Void, String> {
-        protected String doInBackground(String... params) {
-
-            String serveraddress = params[0];
-            int port = Integer.parseInt(params[1]);
-            String result = "";
-
-            // TODO: work here!
-            /*
+    private class ReceiveAsyncTask extends AsyncTask<Void, Void, String> {
+        protected String doInBackground(Void... params) {
             try {
-                Socket socket = new Socket(serveraddress, port);
+                InetAddress inetAddress = InetAddress.getByName(serveraddress);
+
+                Socket socket = new Socket();
+                socket.connect(new InetSocketAddress(inetAddress, port), 10000);
+
+                // Send.
+                DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
+                dataOutputStream.writeShort(0x00);
+
+                // Receive.
                 BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
-                String line;
+                // Fill listView with items.
+                String result = "", line;
                 while ((line = bufferedReader.readLine()) != null)
                     result += line;
+                List<Plug> plugList = new ArrayList<>();
+                String[] separated = result.split(";");
+                try { // The following lines are a bit volatile, if something happens, just let it crash.
+                    for (int i = 0; i < separated.length - 2; i += 3) {
+                        Boolean status = "on".equals(separated[i + 2]);
+                        plugList.add(new Plug(separated[i], separated[i + 1], status));
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+                MainActivity.this.plugItems = plugList.toArray(new Plug[plugList.size()]);
+
+                socket.close();
+                return null;
+            } catch (Exception e) {
+                return e.toString();
+            }
+        }
+
+        protected void onPostExecute(String result) {
+            if (result != null && !result.equals(""))
+                Toast.makeText(MainActivity.this.getApplicationContext(),
+                        "Could not fetch the server data: \n" + result,
+                        Toast.LENGTH_LONG).show();
+            else {
+                // Show plugs in listview.
+                CustomAdapter customAdapter = new CustomAdapter(MainActivity.this, MainActivity.this.plugItems);
+                MainActivity.this.listView.setAdapter(customAdapter);
+            }
+        }
+    }
+
+    /**
+     * Send data to server to add a plug.
+     */
+    private class PlugAddAsyncTask extends AsyncTask<Void, Void, String> {
+        protected String doInBackground(Void... params) {
+            try {
+                InetAddress inetAddress = InetAddress.getByName(serveraddress);
+
+                Socket socket = new Socket();
+                socket.connect(new InetSocketAddress(inetAddress, port), 10000);
+
+                // Send.
+                DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
+
+                String name = plug.getDescription();
+                byte [] encodeName = name.getBytes();
+
+                String binaryStr = "11" + plug.getId();
+                Integer i = Integer.parseInt(binaryStr, 2) << 4;
+                i |= name.length();
+                byte [] frontField = ByteBuffer.allocate(4).putInt(i).array();
+
+                byte [] data = new byte[2 + name.length()];
+                System.arraycopy(frontField, 2, data, 0, 1);
+                System.arraycopy(frontField, 3, data, 1, 1);
+                System.arraycopy(encodeName, 0, data, 2, name.length());
+
+                dataOutputStream.write(data);
 
                 socket.close();
             } catch (Exception e) {
                 return e.toString();
-            }*/
+            }
 
-            return result;
+            // Success.
+            return null;
         }
 
         protected void onPostExecute(String result) {
-            Toast.makeText(MainActivity.this.getApplicationContext(), result, Toast.LENGTH_LONG).show();
-
-            // TODO: remove dummy result string.
-            result = "00001;Lamp Livingroom;true;00010;Lamp Kitchen;false;00011;Coffeemachine;true;00100;Computer;true;"
-                + "00101;Herd;false;00110;Roller Shutter Kitchen;false;00111;Roller Shutter Livingroom;true;"
-                + "01000;Roller Shutter Bedroom;false";
-
-            List<Plug> plugList = new ArrayList<>();
-            String[] separated = result.split(";");
-
-            for (int i = 0; i < separated.length; i+= 3) {
-                plugList.add(new Plug(separated[i], separated[i+1], Boolean.valueOf(separated[i + 2])));
-            }
-
-            MainActivity.this.plugItems = plugList.toArray(new Plug[plugList.size()]);
-            CustomAdapter customAdapter = new CustomAdapter(MainActivity.this, MainActivity.this.plugItems);
-            MainActivity.this.listView.setAdapter(customAdapter);
+            if (result != null)
+                Toast.makeText(MainActivity.this.getApplicationContext(),
+                        "Could not add plug: \n" + result,
+                        Toast.LENGTH_LONG).show();
+            else
+                MainActivity.this.refresh();
         }
     }
 
+    /**
+     * Send data to server to remove a plug.
+     */
+    private class PlugDeleteAsyncTask extends AsyncTask<Void, Void, String> {
+        protected String doInBackground(Void... params) {
+            try {
+                InetAddress inetAddress = InetAddress.getByName(serveraddress);
+
+                Socket socket = new Socket();
+                socket.connect(new InetSocketAddress(inetAddress, port), 10000);
+
+                // Send.
+                DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
+                // TODO: update format.
+                String binaryStr = "10" + plug.getId();
+                Short s = Short.parseShort(binaryStr, 2);
+                dataOutputStream.writeShort(s * 16);
+
+                socket.close();
+            } catch (Exception e) {
+                return e.toString();
+            }
+
+            // Success.
+            return null;
+        }
+
+        protected void onPostExecute(String result) {
+            if (result != null)
+                Toast.makeText(MainActivity.this.getApplicationContext(),
+                        "Could not remove plug: \n" + result,
+                        Toast.LENGTH_LONG).show();
+            else
+                MainActivity.this.refresh();
+        }
+    }
 }

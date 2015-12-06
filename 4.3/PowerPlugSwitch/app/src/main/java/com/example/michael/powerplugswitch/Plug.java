@@ -9,6 +9,12 @@ class Plug {
     private String description;
     private Boolean state;
 
+    public Plug() {
+        this.id = "";
+        this.description = "";
+        this.state = false;
+    }
+
     public Plug(String id, String description, Boolean state) {
         this.id = id;
         this.description = description;
@@ -23,9 +29,11 @@ class Plug {
         this.description = description;
     }
 
-    public void setState(Boolean state) {
-        this.state = state;
-    }
+// --Commented out by Inspection START (06.12.2015 12:57):
+//    public void setState(Boolean state) {
+//        this.state = state;
+//    }
+// --Commented out by Inspection STOP (06.12.2015 12:57)
 
     public String getId() {
         return this.id;
