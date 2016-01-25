@@ -1,0 +1,203 @@
+<%include file="header.html"/>
+
+<body>
+	<style>
+		.layout-background {
+			background: url('/static/figures/coffee_background.png') no-repeat center 0 / cover;
+			width: 100vw;
+			height: 50vh;
+			min-height: 400px;
+			max-height: 550px;
+			position: absolute;
+		}
+		.layout-transparent .mdl-layout__header,
+		.layout-transparent .mdl-layout__drawer-button {
+			color: white;
+		}
+
+		.machine-image {
+			height: 45vh;
+			min-height: 300px;
+			max-height: 500px;
+			width: auto
+		}
+
+		.machine-container {
+			width: 100%;
+			display: inline-block;
+			text-align: center;
+		}
+
+		@media (max-width: 479px) {
+			.layout-background {
+				background: url('/static/figures/coffee_background.png') no-repeat 0 0 / cover;
+				min-height: 570px;
+			}
+		}
+
+		.height-anchored {
+			position: absolute;
+		}
+	</style>
+
+	<div class="layout-background">
+	</div>
+	<div class="layout-transparent mdl-layout mdl-js-layout">
+		<header class="mdl-layout__header mdl-layout__header--transparent">
+			<div class="mdl-layout__header-row">
+				<!-- Title -->
+				<span class="mdl-layout-title">ComCoffee</span>
+				<!-- Add spacer, to align navigation to the right -->
+				<div class="mdl-layout-spacer"></div>
+				<!-- Navigation -->
+				<nav class="mdl-navigation">
+					<a class="mdl-navigation__link" href="">Status</a>
+					<a class="mdl-navigation__link" href="">Statistics</a>
+					<a class="mdl-navigation__link" href="">Account</a>
+				</nav>
+			</div>
+		</header>
+		<div class="mdl-layout__drawer">
+			<span class="mdl-layout-title">AccountName</span>
+			<nav class="mdl-navigation">
+				<a class="mdl-navigation__link" href="">Status</a>
+				<a class="mdl-navigation__link" href="">Statistics</a>
+				<a class="mdl-navigation__link" href="">Account</a>
+			</nav>
+		</div>
+		<main class="mdl-layout__content">
+			<div class="mdl-grid mdl-fullsize">
+				<div class="mdl-layout-spacer"></div>
+				<div class="mdl-cell mdl-cell--5-col mdl-cell--4-col-tablet mdl-cell--4-col-phone">
+					<div class="mdl-grid mdl-fullsize">
+						<div class="mdl-cell mdl-cell--6-col mdl-cell--8-col-tablet">
+							<button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent mdl-color--brown-600 mdl-full-width" type="button" data-toggle="collapse" data-target="#help-well" aria-expanded="false" aria-controls="help-well">
+								<i class="material-icons">free_breakfast</i> 
+								Espresso
+							</button>
+						</div>
+						<div class="mdl-cell mdl-cell--6-col mdl-cell--8-col-tablet">
+							<button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent mdl-color--brown-600 mdl-full-width" type="button" data-toggle="collapse" data-target="#help-well" aria-expanded="false" aria-controls="help-well">
+								<i class="material-icons">free_breakfast</i> 
+								Coffee
+							</button>
+						</div>
+						<div class="mdl-cell mdl-cell--6-col mdl-cell--8-col-tablet">
+							<button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent mdl-color--brown-600 mdl-full-width" type="button" data-toggle="collapse" data-target="#help-well" aria-expanded="false" aria-controls="help-well">
+								<i class="material-icons">free_breakfast</i> 
+								<i class="material-icons">free_breakfast</i> 
+								Espresso
+							</button>
+						</div>
+						<div class="mdl-cell mdl-cell--6-col mdl-cell--8-col-tablet">
+							<button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent mdl-color--brown-600 mdl-full-width" type="button" data-toggle="collapse" data-target="#help-well" aria-expanded="false" aria-controls="help-well">
+								<i class="material-icons">free_breakfast</i> 
+								<i class="material-icons">free_breakfast</i> 
+								Coffee
+							</button>
+						</div>
+					</div>
+				</div>
+				<div class="mdl-cell mdl-cell--3-col mdl-cell--4-col-tablet mdl-cell--4-col-phone">
+					<div class="mdl-grid mdl-fullsize">
+						<div class="mdl-cell mdl-cell--12-col">
+							<%include file="machine_status.html"/>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="mdl-grid mdl-fullsize height-anchored mdl-full-width">
+				<div class="mdl-cell mdl-cell--8-col mdl-cell--4-col-tablet mdl-cell--4-col-phone">
+					<div class="mdl-tabs mdl-js-tabs mdl-js-ripple-effect">
+						<div class="mdl-tabs__tab-bar">
+							<a href="#starks-panel" class="mdl-tabs__tab is-active">Your Stats</a>
+							<a href="#lannisters-panel" class="mdl-tabs__tab">Office Stats</a>
+							<a href="#targaryens-panel" class="mdl-tabs__tab">Miscellaneous</a>
+						</div>
+
+						<div class="mdl-tabs__panel is-active" id="starks-panel">
+							<table class="mdl-data-table mdl-js-data-table mdl-full-width">
+								<thead>
+									<tr>
+										<th class="mdl-data-table__cell--non-numeric">Name</th>
+										<th class="mdl-data-table__cell--non-numeric">Nickname</th>
+										<th>Age</th>
+										<th class="mdl-data-table__cell--non-numeric">Living?</th>
+									</tr>
+								</thead>
+								<tbody>
+									<tr>
+										<td class="mdl-data-table__cell--non-numeric">John Lennon</td>
+										<td class="mdl-data-table__cell--non-numeric">The smart one</td>
+										<td>40</td>
+										<td class="mdl-data-table__cell--non-numeric">No</td>
+									</tr>
+									<tr>
+										<td class="mdl-data-table__cell--non-numeric">Paul McCartney</td>
+										<td class="mdl-data-table__cell--non-numeric">The cute one</td>
+										<td>73</td>
+										<td class="mdl-data-table__cell--non-numeric">Yes</td>
+									</tr>
+									<tr>
+										<td class="mdl-data-table__cell--non-numeric">George Harrison</td>
+										<td class="mdl-data-table__cell--non-numeric">The shy one</td>
+										<td>58</td>
+										<td class="mdl-data-table__cell--non-numeric">No</td>
+									</tr>
+									<tr>
+										<td class="mdl-data-table__cell--non-numeric">Ringo Starr</td>
+										<td class="mdl-data-table__cell--non-numeric">The funny one</td>
+										<td>74</td>
+										<td class="mdl-data-table__cell--non-numeric">Yes</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+						<div class="mdl-tabs__panel" id="lannisters-panel">
+							<table class="mdl-data-table mdl-js-data-table mdl-data-table--selectable mdl-full-width">
+								<thead>
+									<tr>
+										<th class="mdl-data-table__cell--non-numeric">Material</th>
+										<th>Quantity</th>
+										<th>Unit price</th>
+									</tr>
+								</thead>
+								<tbody>
+									<tr>
+										<td class="mdl-data-table__cell--non-numeric">Acrylic (Transparent)</td>
+										<td>250</td>
+										<td>$2.90</td>
+									</tr>
+									<tr>
+										<td class="mdl-data-table__cell--non-numeric">Plywood (Birch)</td>
+										<td>50</td>
+										<td>$1.25</td>
+									</tr>
+									<tr>
+										<td class="mdl-data-table__cell--non-numeric">Laminate (Gold on Blue)</td>
+										<td>10</td>
+										<td>$12.35</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+						<div class="mdl-tabs__panel" id="targaryens-panel">
+							<ul>
+								<li>Viserys</li>
+								<li>Daenerys</li>
+							</ul>
+						</div>
+					</div>
+				</div>
+				<div class="mdl-cell mdl-cell--4-col mdl-cell--4-col-tablet mdl-cell--4-col-phone">
+					<div class="machine-container">
+						<img class="machine-image" src="/static/figures/coffee_xs95_full.png">
+					</div>
+				</div>
+			</div>
+
+		</main>
+	</div>
+</body>
+
+<%include file="footer.html"/>

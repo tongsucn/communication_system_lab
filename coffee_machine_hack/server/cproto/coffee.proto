@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+
+message CoffeeCommand {
+    enum CommandType {
+        OPERATION       = 0;
+        QUERY           = 1;
+    }
+
+    CommandType type    = 1;
+    bytes command       = 2;
+}
+
+message Response {
+    enum ResponseType {
+        OK              = 0;
+        ERR             = 1;
+        NO_WATER        = 2;
+        NO_BEAN         = 3;
+        FORMAT_UNKN     = 4;
+    }
+
+    ResponseType type   = 1;
+    string description  = 2;
+}

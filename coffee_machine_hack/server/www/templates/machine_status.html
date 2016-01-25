@@ -1,0 +1,88 @@
+
+<style>
+
+.status-card-machine.mdl-card {
+  width: 100%;
+  background: #3E4EB8;
+}
+.status-card-machine > .mdl-card__actions {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+.status-card-machine > .mdl-card__title {
+  align-items: flex-start;
+}
+.status-card-machine > .mdl-card__title > h4 {
+  margin-top: 0;
+}
+.status-card-machine > .mdl-card__actions {
+  display: flex;
+  box-sizing:border-box;
+  align-items: center;
+}
+.status-card-machine > .mdl-card__title,
+.status-card-machine > .mdl-card__actions,
+.status-card-machine > .mdl-card__actions > .mdl-button {
+  color: #fff;
+}
+</style>
+
+<div class="status-card-machine mdl-card mdl-color--brown-600 mdl-shadow--2dp">
+  <div class="mdl-tooltip" for="power-toggle">Press to toggle machine power-state</div>
+  <div class="mdl-card__actions mdl-card--border" id="status-main">
+    <a class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect mdl-full-width" id="power-toggle">
+      Machine-Status
+    </a>
+    <i class="material-icons" id="status-icon">done_all</i>
+  </div>
+</div>
+
+<script>
+var updateTimeout;
+var machineStatus;
+
+function getStatusEntry(name, status, x) {
+  return $('<div>', {
+    'class': 'machine-status-entry mdl-card__actions mdl-card--border mdl-color--' + (x ? 'green': 'red') + (status ? '' : '-100'),
+    'html': $('<a>', {
+      'class': 'mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect',
+      'html': name
+    }).attr('disabled', '')
+  }).append('<div class="mdl-layout-spacer"></div><i class="material-icons">' + (x ? 'done' : 'block') + '</i>')
+}
+
+function updateStatus() {
+    var now = new Date();
+    if (updateTimeout) {
+        clearTimeout(updateTimeout);
+    }
+    $.getJSON("/machine/get", function (data) {
+        machineStatus = data;
+        var shade = '';
+        if (data.status) {
+          $('#status-icon').html('done_all');
+        } else {
+          shade = '-100';
+          $('#status-icon').html('block');
+        }
+        $('.machine-status-entry').remove();
+        $(getStatusEntry("Water", data.status, data.has_water)).insertAfter($('#status-main'));
+        $(getStatusEntry("Beans", data.status, data.has_bean)).insertAfter($('#status-main'));
+        $(getStatusEntry("Creme", data.status, data.has_creme)).insertAfter($('#status-main'));
+        $(getStatusEntry("Tray", data.status, data.has_tray)).insertAfter($('#status-main'));
+        var difference = new Date() - now;
+        updateTimeout = setTimeout(updateStatus, Math.max(1000 - difference, 100));
+    }).fail(function () {updateTimeout = setTimeout(updateStatus, 5000); });
+}
+$(document).ready(function () {
+  updateStatus();
+
+  $('#power-toggle').click(function () {
+    if (machineStatus.status) {
+      $.getJSON('/machine/turn_off', function () { updateStatus(); });
+    } else {
+      $.getJSON('/machine/turn_on', function () { updateStatus(); });
+    }
+  });
+});
+
+</script>

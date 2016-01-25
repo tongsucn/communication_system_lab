@@ -1,0 +1,31 @@
+<%include file="header.html"/>
+<body>
+	<div class="mdl-layout mdl-js-layout mdl-color--brown-200">
+		<main class="mdl-layout__content" style="align-self:center;">
+			<div class="mdl-card mdl-shadow--6dp">
+				<div class="mdl-card__title mdl-color--brown-600 mdl-color-text--white">
+					<h2 class="mdl-card__title-text">ComCoffee</h2>
+				</div>
+				<form method="post" action="/auth/login">
+			  		<div class="mdl-card__supporting-text">
+						<input type="hidden" name="from_page" value="${from_page}" />
+						${msg}<br />
+						<div class="mdl-textfield mdl-js-textfield">
+							<input class="mdl-textfield__input" type="text" name="username" value="${username}" />
+							<label class="mdl-textfield__label" for="username">Username</label>
+						</div>
+						<div class="mdl-textfield mdl-js-textfield">
+							<input class="mdl-textfield__input" type="password" name="password" />
+							<label class="mdl-textfield__label" for="password">Password</label>
+						</div>
+					</div>
+					<div class="mdl-card__actions mdl-card--border">
+						<button class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect" type="submit">Log in</button>
+					</div>
+				</form>
+			</div>
+		</main>
+	</div>
+</body>
+
+<%include file="footer.html"/>
