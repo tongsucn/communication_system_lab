@@ -65,15 +65,37 @@ class CommandList(object):
     IC = b'IC:'
     RR = b'RR'
 
-    # Protocol defined commands
     # Alias
+    # Turn on command
     TURN_ON = AN01
+
+    # Turn off command
     TURN_OFF = AN02
+
+    # Turn on/off commands list
+    TURN = {'ON' : TURN_ON,
+            'OFF' : TURN_OFF}
+
+    # Cleaning command
     CLEANING = FA03
-    PRODUCTS = [FA04, FA05, FA06, FA07]
-    MAKE_COFFEE = FA0B
-    MAKE_STEAM = FA09
+
+    # Products commands list
+    PRODUCTS = {1 : FA04,
+                2 : FA05,
+                3 : FA06,
+                4 : FA07,
+                'COFFEE' : FA09,
+                'STEAM' : FA0B}
 
     # New defined
+    CHK_POWER = b'POWER'
     CHK_WATER = b'WATER'
     CHK_BEANS = b'BEANS'
+    CHK_TRAY  = b'TRAY'
+    CHK_ALL    = b'RESOURCE'
+
+    CHK = {'POWER' : CHK_POWER,
+           'WATER' : CHK_WATER,
+           'BEANS' : CHK_BEANS,
+           'TRAY'  : CHK_TRAY,
+           'ALL'   : CHK_ALL}

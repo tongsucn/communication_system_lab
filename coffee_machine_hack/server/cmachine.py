@@ -7,6 +7,8 @@ import json
 import socket
 import logging
 
+import cherrypy
+
 from enum import Enum
 from google.protobuf.message import DecodeError
 
@@ -48,6 +50,10 @@ class CoffeeErr(Enum):
     NO_BEANS:   It will be set when there are no beans available.
 
     NO_CUP:     It will be set when there is no cup available.
+
+    NO_TRAY:    It will be set when there is no tray available.
+
+    STS_TABLE:  It will be set if the response of Arduino is a status table.
     """
 
     # Error list
@@ -62,6 +68,9 @@ class CoffeeErr(Enum):
     NO_WATER    = 8
     NO_BEANS    = 9
     NO_CUP      = 10
+    NO_TRAY     = 11
+    NO_POWER    = 12
+    STS_TABLE   = 13
 
 
 class CoffeeMachine(object):
@@ -74,9 +83,11 @@ class CoffeeMachine(object):
            'OFF' : CoffeeErr.WAS_OFF}
     NOT = {'ON' : CoffeeErr.NOT_ON,
            'OFF' : CoffeeErr.NOT_OFF}
-    NO = {'WATER' : CoffeeErr.NO_WATER,
+    NO = {'POWER' : CoffeeErr.NO_POWER,
+          'WATER' : CoffeeErr.NO_WATER,
           'BEANS' : CoffeeErr.NO_BEANS,
-          'CUP'   : CoffeeErr.NO_CUP}
+          'CUP'   : CoffeeErr.NO_CUP,
+          'TRAY' : CoffeeErr.NO_TRAY}
 
 
     def __init__(self, addr, port, product_list_file):
@@ -93,8 +104,6 @@ class CoffeeMachine(object):
         self.c_addr = addr
         self.c_port = port
 
-        # Coffee machine status
-        self.status = False
 
         # Connection timeout
         self.coffee_timeout = 120
@@ -156,6 +165,8 @@ class CoffeeMachine(object):
             logging.warning('Product file not exist, use previous/default.')
 
 
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
     def ls_products(self):
         """
         Provide the list of products. List is not sorted.
@@ -165,7 +176,7 @@ class CoffeeMachine(object):
                 [(1, 'Product 1'), (2, 'Product 2'), ...,
                 ('COFFEE', 'Coffee'), ...]
         """
-        return self.product_list
+        return {key : name for key, name in self.product_list}
 
 
     def _control(self, cmd_type, cmd):
@@ -228,11 +239,15 @@ class CoffeeMachine(object):
         return resp
 
 
+    @cherrypy.expose
     def turn(self, status):
+        res = self._turn(status)
+        return res[1]
+
+
+    def _turn(self, status):
         """
-        Turn on or off  the coffee machine. Flag self.status will be set to
-        True or False after calling. Before cleaning, it will firstly check
-        water tank. If water is not available, NO_WATER error will be returned.
+        Turn on or off  the coffee machine.
 
         ATTENTION: If the input argument's format is INCORRECT, the TypeError
                    exception will be raised.
@@ -258,16 +273,21 @@ class CoffeeMachine(object):
                 (CoffeeErr.WAS_OFF, str)
                 (CoffeeErr.NOT_ON, str)
                 (CoffeeErr.NOT_OFF, str)
-                (CoffeeErr.NO_WATER, str))
         """
         resp = None
         accepted = ['ON', 'OFF']
 
         if type(status) is not str or status not in accepted:
             raise TypeError('Incorrect status value. Please either ON or OFF')
+        logging.info('Coffee machine status checking.')
+        status_table = self.check('ALL')
 
         logging.info('Try turning %s the coffee machine.' % status)
-        if (self.status == (status == 'ON')):
+        if status_table[0] != CoffeeErr.STS_TABLE:
+            resp = status_table
+        # Power status checking need to be fixed
+        elif False:
+            # elif status_table[1]['POWER'] == (status == 'ON'):
             resp = (self.WAS[status],
                     'Coffee machine was already %s' % status)
 
@@ -283,10 +303,9 @@ class CoffeeMachine(object):
                 if raw_resp[1].type == CP.Response.OK:
                     resp = (CoffeeErr.OK,
                             'Coffee machine is now turned %s' % status)
-                    self.status = (status == 'ON')
 
                     logging.info('Coffee machine is now turned %s.' % status)
-                elif raw_resp[1].type == CP.Response.ERR:
+                elif raw_resp[1].type == CP.Response.OPERATION_ERR:
                     resp = (self.NOT[status],
                             'Coffee machine cannot be turned %s' % status)
 
@@ -301,53 +320,24 @@ class CoffeeMachine(object):
         return resp
 
 
-    def clean(self):
-        """
-        Clean the coffee machine.
-
-        Returns:
-            Format (ERR_CODE, DETAIL):
-                ERR_CODE: Error code defined in class CoffeeErr
-                DETAIL: A human-readable description for result
-            Potential:
-                (CoffeeErr.OK, str)
-                (CoffeeErr.DEFAULT, str)
-                (CoffeeErr.TIMEOUT, str)
-                (CoffeeErr.PB_DECODE, str)
-                (CoffeeErr.WAS_OFF, str)
-        """
-        resp = None
-
-        logging.info('Try cleaning the coffee machine')
-        if (not self.status):
-            resp = (CoffeeErr.WAS_OFF,
-                    'Machine was turned OFF, turn it ON before cleaning')
-
-            logging.warning('Coffee machine was off when try cleaning it.')
+    @cherrypy.expose
+    def makeById(self, pid):
+        logging.info('Making product: ' + pid)
+        try:
+            iPid = int(pid)
+        except ValueError:
+            logging.error('Invalid input.')
+            return
+        prod = None
+        for p in self.product_list:
+            if p[0] == iPid:
+                prod = p
+        if prod:
+            logging.info('Calling make with ' + prod[1])
+            res = self.make(prod)
+            return res[1]
         else:
-            # Before operation, check water tank
-            resp_water = self.check('WATER')
-            if resp_water[0] == CoffeeErr.NO_WATER:
-                return resp_water
-
-            # Send command to machine and wait for response
-            raw_resp = self._control(CP.CoffeeCommand.OPERATION, CL.CLEANING)
-
-            # Parse parsed response from self._control
-            if raw_resp[0] == CoffeeErr.OK:
-                # Parsing CORRECT. Parse Protobuf message instance.
-                if raw_resp[1].type == CP.Response.OK:
-                    resp = (CoffeeErr.OK, 'Cleaning finished')
-                    self.status = True
-
-                    logging.info('Cleaning finished')
-                else:
-                    resp = self._err_format()
-            else:
-                # Parsing INCORRECT. Response error message from self._control
-                resp = raw_resp
-
-        return resp
+            return 0
 
 
     def make(self, product):
@@ -383,9 +373,14 @@ class CoffeeMachine(object):
         resp = None
         product_id = product[0]
         product_name = product[1]
+        logging.info('Coffee machine status checking.')
+        status_table = self.check('ALL')
 
         logging.info('Make product: %s.' % product_name)
-        if (not self.status):
+        if status_table[0] != CoffeeErr.STS_TABLE:
+            resp = status_table
+        elif False:
+            # elif status_table[1]['POWER'] == (status == 'ON'):
             resp = (CoffeeErr.WAS_OFF,
                     'Machine was turned OFF, turn it ON before making product')
 
@@ -406,19 +401,11 @@ class CoffeeMachine(object):
                 # Parsing CORRECT. Parse Protobuf message instance.
                 if raw_resp[1].type == CP.Response.OK:
                     resp = (CoffeeErr.OK, '%s is prepared' % product_name)
-                    self.status = True
 
                     logging.info('%s is prepared.' % product_name)
-                elif raw_resp[1].type == CP.Response.NO_WATER:
-                    resp = (CoffeeErr.NO_WATER, 'No water in water tank')
-
-                    logging.error('Cannot make %s because no water in water'
-                                  ' tank.' % product_name)
-                elif raw_resp[1].type == CP.Response.NO_BEAN:
-                    resp = (CoffeeErr.NO_BEANS, 'No beans available')
-
-                    logging.error('Cannot make %s because no beans available'
-                                  % product_name)
+                elif raw_resp[1].type == CP.Response.OPERATION_ERR:
+                    resp = (CoffeeErr.DEFAULT, 'Cannot make %s' % product_name)
+                    logging.error('Cannot make %s' % product_name)
                 else:
                     resp = self._err_format()
             else:
@@ -436,7 +423,8 @@ class CoffeeMachine(object):
             True: The coffee machine is on.
             False: The coffee machine is off.
         """
-        return self.status
+        resp = self.check('POWER')
+        return True if resp[0] == CoffeeErr.OK else False
 
 
     def check(self, target):
@@ -452,72 +440,105 @@ class CoffeeMachine(object):
 
         Args:
             target: Target to be checked:
+                'ALL': power, water, tray, beans (beans not support yet)
+                'POWER': machine status
                 'WATER': water availability
+                'TRAY': tray availability
                 'BEANS': bean availability (not support yet)
                 'CUP': cup existence (not support yet)
 
         Returns:
             Format (ERR_CODE, DETAIL):
                 ERR_CODE: Error code defined in class CoffeeErr
-                DETAIL: A human-readable description for result
+                DETAIL: A human-readable description for result or a dict
+                        for storing multiple results (only for STS_TABLE).
             Potential:
                 (CoffeeErr.OK, str)
                 (CoffeeErr.DEFAULT, str)
                 (CoffeeErr.TIMEOUT, str)
                 (CoffeeErr.PB_DECODE, str)
+                (CoffeeErr.NO_POWER, str)
                 (CoffeeErr.NO_WATER, str)
+                (CoffeeErr.NO_TRAY, str)
                 (CoffeeErr.NO_BEANS, str)   # Not support yet
                 (CoffeeErr.NO_CUP, str)     # Not support yet
+                (CoffeeErr.STS_TABLE, dict)
         """
         resp = None
-        accepted = ['WATER', 'BEANS', 'CUP']
-        RESP_ERR = {'WATER' : CP.Response.NO_WATER,
-                    'BEANS' : CP.Response.NO_BEAN}
+        accepted = ['ALL', 'POWER', 'WATER', 'BEANS', 'CUP', 'TRAY']
+        not_support = ['BEANS', 'CUP']
+        err_idx = {'POWER' : CoffeeErr.NO_POWER,
+                   'WATER' : CoffeeErr.NO_WATER,
+                   'BEANS' : CoffeeErr.NO_BEANS,
+                   'CUP' : CoffeeErr.NO_CUP,
+                   'TRAY' : CoffeeErr.NO_TRAY}
 
         if type(target) is not str or target not in accepted:
             raise TypeError('Incorrect status value. '
                             'Please use these values: %s' % ','.join(accepted))
 
         logging.info('Try checking %s.' % target)
-        if (not self.status):
-            resp = (CoffeeErr.WAS_OFF,
-                    'Machine was turned OFF, turn it ON before checking')
-
-            logging.warning('Coffee machine was off when try checking %s.'
-                            % target)
+        if target in not_support:
+            # Cup detection or beans checking, not support yet
+            resp = (CoffeeErr.DEFAULT,
+                    'Checking %s is not supported yet' % target)
+            logging.warning('Checking %s is not supported yet.' % target)
         else:
-            if target == 'CUP' or target == 'BEANS':
-                # Cup detection or beans checking, not support yet
-                resp = (CoffeeErr.DEFAULT,
-                        'Checking %s is not supported yet' % target)
+            # Send command to machine and wait for response
+            raw_resp = self._control(CP.CoffeeCommand.QUERY, CL.CHK[target])
 
-                logging.warning('Checking %s is not supported yet.' % target)
-            else:
-                # Send command to machine and wait for response
-                raw_resp = self._control(CP.CoffeeCommand.QUERY,
-                                         CL.CHK[target])
+            # Parse parsed response from self._control
+            if raw_resp[0] == CoffeeErr.OK:
+                # Getting status table
+                status_idx = {'POWER' : raw_resp[1].results.POWER,
+                              'WATER' : raw_resp[1].results.WATER,
+                              'BEANS' : raw_resp[1].results.POWER,
+                              'CUP' : True,
+                              'TRAY' : raw_resp[1].results.TRAY}
 
-                # Parse parsed response from self._control
-                if raw_resp[0] == CoffeeErr.OK:
-                    # Parsing CORRECT. Parse Protobuf message instance.
-                    if raw_resp[1].type == CP.Response.OK:
-                        resp = (CoffeeErr.OK,
-                                '%s is available.' % target)
-                        self.status = True
-
-                        logging.info('%s is available.' % target)
-                    elif raw_resp[1].type == RESP_ERR[target]:
-                        resp = (self.NO[target],
-                                '%s is not available' % target)
-
-                        logging.warning('%s is not available.' % target)
+                if raw_resp[1].type == CP.Response.RESULT:
+                    if target == 'ALL':
+                        resp = (CoffeeErr.STS_TABLE, status_idx)
+                        logging.info('Got status table.')
                     else:
-                        resp = self._err_format()
+                        if status_idx[target]:
+                            resp = (CoffeeErr.OK, '%s is available' % target)
+                            logging.info('%s is available.' % target)
+                        else:
+                            resp = (err_idx[target], '%s is not available.'
+                                    % target)
+                            logging.error('%s is not available.' % target)
                 else:
-                    # Parsing INCORRECT. Error message from self._control
-                    resp = raw_resp
-
+                    resp = self._err_format()
+            else:
+                resp = raw_resp
         return resp
+
+
+    def checkWeb(self, target):
+        res = self.check(target)
+        if res[0] == CoffeeErr.OK:
+            return res[1]
+        return False
+
+
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    def get(self):
+        res = {
+            "status": self.status,
+            "product_list": [],
+        }
+        if self.status == True:
+                res.update({
+            	     "has_water": self.checkWeb('WATER'),
+                     "has_bean": self.checkWeb('BEANS'),
+            	     "has_tray":self.checkWeb('TRAY'),
+            	     "has_cup": self.checkWeb('CUP'),
+                })
+        if self.product_list:
+            res["product_list"] = self.product_list
+        return res
 
 
     def _err_format(self):

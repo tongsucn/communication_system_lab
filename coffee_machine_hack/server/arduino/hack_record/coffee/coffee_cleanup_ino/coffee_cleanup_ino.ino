@@ -19,9 +19,6 @@ void setup() {
   Serial.begin(9600);
   Serial1.begin(9600);
   Serial.println("Starting coffeehacker");
-  //getASCIIResponse("AN:02", "Turn OFF: ");
-  //delay(10000);
-  //getASCIIResponse("AN:01","Turn ON: ");
   delay(5000);
   getASCIIResponse("TY", "Type: ");
   Serial.println("");
@@ -31,9 +28,10 @@ void loop() {
   tankStatus = 0;
   dtStatus = 0;
   collectInputData();
-  Serial.print("STATUS UPDATE:\n\n");
+  Serial.print("STATUS UPDATE:\n");
   checkWaterTank();
   checkDripTray();
+  Serial.print("\n");
   //getBitResponse("IC:","IC: ");
   //delay(200);
   //Serial.println("");
@@ -53,7 +51,7 @@ void collectInputData(){
     }
     tankStatus += ((getVal(r[6])&0x02)>> 1);
     dtStatus += (getVal(r[6])&0x01);
-    delay(200);  
+    delay(100);  
   }  
 }
 

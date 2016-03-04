@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 #include <SPI.h>
 #include <EthernetUdp.h>
 
@@ -10,14 +12,12 @@
    Description:   Performing tasks according to parsed requests
 
    Args:
-      parsed (const ParsedRwq *): parsed request
-      buf (uint8_t *): response buffer
-      len (int): reponse buffer's size
+      parsed (ParsedRwq *): parsed request
 
    Returns:
       (bool): operation result, true for succeed
 */
-bool perform(const ParsedReq *parsed);
+bool perform(ParsedReq *parsed);
 
 // Network variables
 // MAC address of Arduino
@@ -26,7 +26,7 @@ byte mac[] = {
 };
 
 // IP address of Arduino
-IPAddress ip(192, 168, 199, 233);
+IPAddress ip(192, 168, 10, 233);
 // Port for UDP communication
 uint32_t localPort = 8233;
 
@@ -38,14 +38,28 @@ EthernetUDP udp;
 void setup() {
   // Setup serial output
   Serial.begin(9600);
+  Serial1.begin(9600);
 
   // Setup network
   setupNetwork(&udp, mac, &ip, localPort);
-  Serial.println("Welcome");
+  Serial.print("Initializing network configuration... ");
   Serial.print("Working at ");
   Serial.print(Ethernet.localIP());
   Serial.print(":");
   Serial.println(localPort);
+
+  // Turn on the machine
+  Serial.print("Initializing coffee machine... ");
+  String result = control((const uint8_t *)"AN:01", 5);
+  if (String("ok:") == result) {
+    Serial.println("Done!");
+    Serial.println("Welcome!");
+  }
+  else {
+    Serial.println("Failed!");
+    Serial.print("Return value: ");
+    Serial.println(result.length() > 0 ? result : "N/A");
+  }
 }
 
 
@@ -57,26 +71,36 @@ void loop() {
   // Read a packet if there is available data
   int packetSize = udp.parsePacket();
   if (packetSize) {
-    Serial.println("New REQ");
+    Serial.println("\n==== New request...");
+#ifdef HACK_DEBUG
+    Serial.print("Request from: ");
+    Serial.print(udp.remoteIP());
+    Serial.print(":");
+    Serial.println(udp.remotePort());
+#endif
 
     // Read packet into readBuffer
     udp.read(readBuffer, UDP_TX_PACKET_MAX_SIZE);
 
     // Parsing content
-    Serial.print("Parse message... ");
+    Serial.println("\n==== Parse message...");
     ParsedReq parsed = reqParser(readBuffer, packetSize);
 
+    // Self-checking
+    Serial.println("\n==== System self-checking...");
+    update_status();
+
     // Perform operation
-    Serial.print("Perform operation... ");
+    Serial.println("\n==== Perform operation...");
     bool result = perform(&parsed);
 
     // Encode response
-    Serial.print("Encode response... ");
+    Serial.println("\n==== Encode response...");
     uint8_t respBuf[RESP_MAX_LEN];
     int respLen = encode_resp(&parsed, result, respBuf, RESP_MAX_LEN);
 
     // Send response
-    Serial.print("Send response... ");
+    Serial.println("\n==== Send response...");
     udp.beginPacket(udp.remoteIP(), udp.remotePort());
     udp.write(respBuf, respLen);
     udp.endPacket();
@@ -88,13 +112,22 @@ void loop() {
 }
 
 
-bool perform(const ParsedReq *parsed) {
-  if (parsed->type == TYP_REQ_OPER)
-    return control(parsed->content, parsed->len);
-  else if (parsed->type == TYP_REQ_QWT)
-    return has_water();
-  else if (parsed->type == TYP_REQ_QBA)
-    return has_bean();
-  else
-    return false;
+bool perform(ParsedReq *parsed) {
+  switch (parsed->type) {
+    // Perform operation type commands, e.g. turn on/off, make coffee etc.
+    case TYP_REQ_OPER:
+      return String("ok:") == control(parsed->content, parsed->len);
+    case TYP_REQ_QSTS:
+      parsed->len = 1;
+      parsed->content[0] = get_status_table();
+
+      // Checking every status
+      if (is_on() && has_water() && has_bean() && has_tray())
+        return true;
+      else
+        return false;
+
+    default:
+      return false;
+  }
 }

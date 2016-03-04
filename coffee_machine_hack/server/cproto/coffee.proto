@@ -14,12 +14,19 @@ message CoffeeCommand {
 message Response {
     enum ResponseType {
         OK              = 0;
-        ERR             = 1;
-        NO_WATER        = 2;
-        NO_BEAN         = 3;
-        FORMAT_UNKN     = 4;
+        RESULT          = 1;
+        OPERATION_ERR   = 2;
+        FORMAT_ERR      = 3;
+    }
+
+    message ResultTable {
+        bool POWER      = 1;
+        bool WATER      = 2;
+        bool BEANS      = 3;
+        bool TRAY       = 4;
     }
 
     ResponseType type   = 1;
     string description  = 2;
+    ResultTable results = 3;
 }

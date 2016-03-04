@@ -17,10 +17,10 @@
 
 // Coffee Machine Protocol
 #define TYP_REQ_OPER    1     // Operation type (turn on/off, brew coffee etc.)
-#define TYP_REQ_QWT     2     // Query type: water tank
-#define TYP_REQ_QBA     3     // Query type: bean available
-#define TYP_REQ_UNKN    4     // Unknown type (format fault)
-#define BIN_CODE_LEN    28    // Machine binary code length
+#define TYP_REQ_QSTS    2     // Query machine status
+#define TYP_REQ_UNKN    3     // Unknown type (format fault)
+
+#define BIN_CODE_LEN    5     // Machine binary code length
 #define RESP_MAX_LEN    64    // Response maximum length
 
 // Parsed request structure
@@ -44,7 +44,7 @@ struct ParsedReq {
       mac (byte []): MAC address of the Arduino
       ip (const IPAddress *): local IP address
       localPort (uint32_t): local port
- */
+*/
 void setupNetwork(EthernetUDP *udp, byte mac[], const IPAddress *ip,
                   uint32_t localPort);
 
