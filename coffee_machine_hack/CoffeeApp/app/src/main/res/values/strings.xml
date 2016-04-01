@@ -5,4 +5,10 @@
     <string name="navigation_drawer_close">Close navigation drawer</string>
 
     <string name="action_settings">Settings</string>
+    <string name="title_settingActivity">Settings</string>
+
+    <string name="preferenceTitle">Settings</string>
+    <string name="preferenceKey">settingKey</string>
+    <string name="preferenceDefault">test</string>
+
 </resources>

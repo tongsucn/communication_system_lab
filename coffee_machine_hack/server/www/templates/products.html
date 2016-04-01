@@ -1,0 +1,122 @@
+<script>
+var productTimeout;
+
+var queuedProduct;
+
+var prodNameToIcon = {
+  "Espresso": '<i class="material-icons" style="font-size: 16px;">free_breakfast</i>',
+  "Coffee": '<i class="material-icons">free_breakfast</i>',
+  "Small Coffee": '<i class="material-icons">free_breakfast</i>',
+  "Big Coffee": '<i class="material-icons" style="font-size: 32px;">free_breakfast</i>',
+  "2 Espresso": '<i class="material-icons" style="font-size: 16px;">free_breakfast</i><i class="material-icons" style="font-size: 16px;">free_breakfast</i>'
+};
+
+function preMakeCheck(e) {
+  var product = $(e.currentTarget).attr('product-id');
+  queuedProduct = product;
+  $('.cond-msg').addClass('hidden');
+  if ($('#invalid-cup-dialog')[0].open) {
+    $('#invalid-cup-dialog')[0].close();
+  }
+  if ($('#invalid-conditions-dialog')[0].open) {
+    $('#invalid-conditions-dialog')[0].close();
+  }
+
+  if (machineStatus.status !== true) {
+    $('#machine-message').removeClass('hidden');
+    $('#invalid-conditions-dialog')[0].showModal();
+    return;
+  }
+
+  if (machineStatus.has_water !== true) {
+    $('#water-message').removeClass('hidden');
+    $('#invalid-conditions-dialog')[0].showModal();
+    return;
+  }
+
+  if (machineStatus.has_bean !== true) {
+    $('#bean-message').removeClass('hidden');
+    $('#invalid-conditions-dialog')[0].showModal();
+    return;
+  }
+
+  if (machineStatus.cupStatus === "Undetermined") {
+    $('#cup-unsure').removeClass('hidden');
+    $('#frame').attr('src', 'detector/getImage?frameId=frame&t=' + new Date().getTime());
+    $('#invalid-cup-dialog')[0].showModal();
+    return;
+  }
+
+  if (machineStatus.cupStatus === "0") {
+    $('#cup-message').removeClass('hidden');
+    $('#frame').attr('src', 'detector/getImage?frameId=frame&t=' + new Date().getTime());
+    $('#invalid-cup-dialog')[0].showModal();
+    return;
+  }
+
+  makeProduct(product);
+}
+
+function makeProduct(product) {
+  $.get('/machine/makeById?pid=' + product, function (data) {
+    updateStats();
+    if (data !== '1')  {
+      $.snackbar({
+        content: 'Brewing failed: ' + data,
+        style: 'snackbar alert-danger',
+        timeout: 5000
+      });
+    }
+  });
+}
+
+function getProductEntry(productName, pid) {
+  return $('<div>', {
+    'class': 'mdl-cell mdl-cell--6-col mdl-cell--8-col-tablet mdl-cell--2-col-phone machine-product-entry',
+    'html': $('<button>', {
+      'class': 'mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--primary mdl-full-width',
+      'type': 'button',
+      'html': productName,
+      'product-id': pid
+    }).click(preMakeCheck).append(prodNameToIcon[productName])
+  });
+}
+
+function updateProducts() {
+    var now = new Date();
+    if (productTimeout) {
+        clearTimeout(productTimeout);
+    }
+    $.getJSON("/machine/ls_products", function (data) {
+        //$('.machine-product-entry').remove();
+       	$.each(data, function(k, prod) {
+          if ($('[product-id="' + k + '"]').length === 0) {
+                $('#coffe-buttons').append(getProductEntry(prod, k));
+          }
+       	});
+        var difference = new Date() - now;
+        productTimeout = setTimeout(updateProducts, Math.max(5000 - difference, 100));
+    }).fail(function () {productTimeout = setTimeout(updateProducts, 10000); });
+}
+
+$(document).ready(function () {
+  updateProducts();
+});
+</script>
+
+<style>
+
+    @media screen and (max-width: 1024px) {
+      .mdl-btn-group {
+        padding-left: 0px;
+        padding-right: 0px;
+      }
+    }
+
+    .mdl-btn-group {
+      padding-top: 0px;
+    }
+</style>
+
+<div class="mdl-grid mdl-fullsize mdl-btn-group" id="coffe-buttons">
+</div>

@@ -1,0 +1,220 @@
+{
+    "Statistics": {
+        "counters": {
+            "Cappuccino": 31,
+            "Espresso": 4,
+            "Latte": 11,
+            "Milk coffee": 26
+        },
+        "lastCoffees": [
+            {
+                "name": "Milk coffee",
+                "timestamp": "2016-03-09 09:53:19.377271",
+                "user": "testadmin"
+            },
+            {
+                "name": "Milk coffee",
+                "timestamp": "2016-03-09 09:53:19.561752",
+                "user": "testadmin"
+            },
+            {
+                "name": "Milk coffee",
+                "timestamp": "2016-03-09 09:53:19.729076",
+                "user": "testadmin"
+            },
+            {
+                "name": "Milk coffee",
+                "timestamp": "2016-03-09 09:53:19.897742",
+                "user": "testadmin"
+            },
+            {
+                "name": "Milk coffee",
+                "timestamp": "2016-03-09 09:53:24.289238",
+                "user": "testadmin"
+            },
+            {
+                "name": "Milk coffee",
+                "timestamp": "2016-03-09 09:53:25.032968",
+                "user": "testadmin"
+            },
+            {
+                "name": "Latte",
+                "timestamp": "2016-03-09 09:53:34.656517",
+                "user": "testadmin"
+            },
+            {
+                "name": "Cappuccino",
+                "timestamp": "2016-03-09 09:54:44.297841",
+                "user": "testadmin"
+            },
+            {
+                "name": "Cappuccino",
+                "timestamp": "2016-03-09 09:54:44.712394",
+                "user": "testadmin"
+            },
+            {
+                "name": "Cappuccino",
+                "timestamp": "2016-03-09 09:57:13.727017",
+                "user": "testadmin"
+            }
+        ]
+    },
+    "Users": {
+        "Hubertus": {
+            "email": "Hub@ert",
+            "groups": [],
+            "name": "M\u00fcller",
+            "pw": "$2b$12$s21jZfC/RzY3R.9j6lGOVug1FrnUagL5rUgZecqES3U/sdmRl26eu"
+        },
+        "coffeeaddict": {
+            "email": "testMail@rwth-aachen.de",
+            "groups": [],
+            "name": "Dominik Chmiel",
+            "pw": "$2b$12$11p1SQmoOcVZx/tJxyIIKuvbFU29a5BiCh6jgSBM/tc5SNf6oY7NO",
+            "statistics": {
+                "counters": {
+                    "Cappuccino": 19,
+                    "Espresso": 3,
+                    "Latte": 9,
+                    "Milk coffee": 13
+                },
+                "lastCoffees": [
+                    {
+                        "name": "Latte",
+                        "timestamp": "2016-03-04 14:14:23.639510"
+                    },
+                    {
+                        "name": "Cappuccino",
+                        "timestamp": "2016-03-04 14:14:24.901014"
+                    },
+                    {
+                        "name": "Milk coffee",
+                        "timestamp": "2016-03-04 14:14:25.909246"
+                    },
+                    {
+                        "name": "Espresso",
+                        "timestamp": "2016-03-04 14:14:26.604199"
+                    },
+                    {
+                        "name": "Latte",
+                        "timestamp": "2016-03-04 14:14:27.473669"
+                    },
+                    {
+                        "name": "Cappuccino",
+                        "timestamp": "2016-03-04 14:14:27.937497"
+                    },
+                    {
+                        "name": "Cappuccino",
+                        "timestamp": "2016-03-04 14:14:29.036768"
+                    },
+                    {
+                        "name": "Milk coffee",
+                        "timestamp": "2016-03-04 14:14:30.004039"
+                    },
+                    {
+                        "name": "Cappuccino",
+                        "timestamp": "2016-03-04 15:06:26.148132"
+                    },
+                    {
+                        "name": "Cappuccino",
+                        "timestamp": "2016-03-04 14:16:23.160343"
+                    }
+                ]
+            }
+        },
+        "testadmin": {
+            "email": "MasterOf@Everything",
+            "groups": [
+                "admin"
+            ],
+            "name": "Administrator",
+            "pw": "$2b$12$pBkNXh7DeRV4EsXxgOO4XusPhafvaUH2lXtVoZpwz6A7BS6PNkDnu",
+            "statistics": {
+                "counters": {
+                    "Cappuccino": 30,
+                    "Espresso": 4,
+                    "Latte": 11,
+                    "Milk coffee": 26
+                },
+                "lastCoffees": [
+                    {
+                        "name": "Milk coffee",
+                        "timestamp": "2016-03-09 09:53:19.377271"
+                    },
+                    {
+                        "name": "Milk coffee",
+                        "timestamp": "2016-03-09 09:53:19.561752"
+                    },
+                    {
+                        "name": "Milk coffee",
+                        "timestamp": "2016-03-09 09:53:19.729076"
+                    },
+                    {
+                        "name": "Milk coffee",
+                        "timestamp": "2016-03-09 09:53:19.897742"
+                    },
+                    {
+                        "name": "Milk coffee",
+                        "timestamp": "2016-03-09 09:53:24.289238"
+                    },
+                    {
+                        "name": "Milk coffee",
+                        "timestamp": "2016-03-09 09:53:25.032968"
+                    },
+                    {
+                        "name": "Latte",
+                        "timestamp": "2016-03-09 09:53:34.656517"
+                    },
+                    {
+                        "name": "Cappuccino",
+                        "timestamp": "2016-03-09 09:54:44.297841"
+                    },
+                    {
+                        "name": "Cappuccino",
+                        "timestamp": "2016-03-09 09:54:44.712394"
+                    },
+                    {
+                        "name": "Cappuccino",
+                        "timestamp": "2016-03-09 09:57:13.727017"
+                    }
+                ]
+            }
+        },
+        "testuer": {
+            "email": "asdklfj@asd",
+            "groups": [],
+            "name": "asjkldl\u00f6f",
+            "pw": "$2b$12$/QZBRsJPHLOsYleJQOzHeuHQbItHtV8.zTscFiSX5mhU5sF5F62.2"
+        },
+        "testuser": {
+            "email": "Nobody@Nothing",
+            "groups": [],
+            "name": "Nemo Nobody",
+            "pw": "$2b$12$pBkNXh7DeRV4EsXxgOO4XusPhafvaUH2lXtVoZpwz6A7BS6PNkDnu"
+        },
+        "testuser123": {
+            "email": "tong.su@rwth-aachen.de",
+            "groups": [],
+            "name": "shi",
+            "pw": "$2b$12$lmuKZ5ysDbMFnf01YvTBuOc7bTsB6eP4IrHF4U84Nvk5vAYqqMzcy"
+        },
+        "testuserts": {
+            "email": "tong.su@rwth-aachen.de",
+            "groups": [],
+            "name": "TS",
+            "pw": "$2b$12$GwVUoKreJPc2ps4zEjYPLefGBfvlc0oILqP4vrlFzm1M5FVD2tYWi"
+        },
+        "tongsu": {
+            "email": "tong.su@rwth-aachen.de",
+            "groups": [],
+            "name": "Tong",
+            "pw": "$2b$12$l8aTt3pTnKWeFQSEHSir9OQvbthspjgVfNIR9CeQRCTfDZe6jEhSe"
+        },
+        "ts123": {
+            "email": "tong.su@rwth-aachen.de",
+            "groups": [],
+            "name": "tong",
+            "pw": "$2b$12$PnhR4sE7jQ5ACmQlEoOwQugL/9BNr1GynxfQs7d/b4S4/jmrYMrxy"
+        }
+    }
+}

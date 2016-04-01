@@ -1,10 +1,12 @@
 #include <stdio.h>
+#include <string.h>
 
 #include <SPI.h>
 #include <EthernetUdp.h>
 
 #include <coffee_com.h>
 #include <coffee_ctrl.h>
+#include <coffee_utility.h>
 
 
 /*
@@ -52,6 +54,7 @@ void setup() {
   Serial.print("Initializing coffee machine... ");
   String result = control((const uint8_t *)"AN:01", 5);
   if (String("ok:") == result) {
+    set_power(true);
     Serial.println("Done!");
     Serial.println("Welcome!");
   }
@@ -71,36 +74,36 @@ void loop() {
   // Read a packet if there is available data
   int packetSize = udp.parsePacket();
   if (packetSize) {
-    Serial.println("\n==== New request...");
-#ifdef HACK_DEBUG
-    Serial.print("Request from: ");
-    Serial.print(udp.remoteIP());
-    Serial.print(":");
-    Serial.println(udp.remotePort());
-#endif
+    log_debug("==== New request...");
+    if (is_debug()) {
+      Serial.print("Request from: ");
+      Serial.print(udp.remoteIP());
+      Serial.print(":");
+      Serial.println(udp.remotePort());
+    }
 
     // Read packet into readBuffer
     udp.read(readBuffer, UDP_TX_PACKET_MAX_SIZE);
 
     // Parsing content
-    Serial.println("\n==== Parse message...");
+    log_debug("==== Parse message...");
     ParsedReq parsed = reqParser(readBuffer, packetSize);
 
     // Self-checking
-    Serial.println("\n==== System self-checking...");
+    log_debug("==== System self-checking...");
     update_status();
 
     // Perform operation
-    Serial.println("\n==== Perform operation...");
+    log_debug("==== Perform operation...");
     bool result = perform(&parsed);
 
     // Encode response
-    Serial.println("\n==== Encode response...");
+    log_debug("==== Encode response...");
     uint8_t respBuf[RESP_MAX_LEN];
     int respLen = encode_resp(&parsed, result, respBuf, RESP_MAX_LEN);
 
     // Send response
-    Serial.println("\n==== Send response...");
+    log_debug("==== Send response...");
     udp.beginPacket(udp.remoteIP(), udp.remotePort());
     udp.write(respBuf, respLen);
     udp.endPacket();
@@ -116,6 +119,16 @@ bool perform(ParsedReq *parsed) {
   switch (parsed->type) {
     // Perform operation type commands, e.g. turn on/off, make coffee etc.
     case TYP_REQ_OPER:
+      // If the command is ON or OFF, then change the power status
+      char cmd[6];
+      cmd[5] = '\0';
+      strncpy(cmd, (char *)parsed->content, 5);
+      if (!strcmp("AN:01", cmd))
+        set_power(true);
+      else if (!strcmp("AN:02", cmd))
+        set_power(false);
+      else
+        ;
       return String("ok:") == control(parsed->content, parsed->len);
     case TYP_REQ_QSTS:
       parsed->len = 1;

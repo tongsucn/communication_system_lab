@@ -26,6 +26,9 @@ uint8_t intra = 1, inter = 7, afterCmd = 100;
 // Status table
 uint8_t statusTable = 0;
 
+// Power status, for stabler power status
+bool powerStatus;
+
 
 String control(const uint8_t *cmd, int len) {
   String result = "";
@@ -49,18 +52,18 @@ String control(const uint8_t *cmd, int len) {
 
     result += decode_machine(byteSlice);
   }
-  
+
   if (is_debug()) {
     char lenBuf[8];
-    
+
     String respLenHead = "Response length: ";
     String respLen = itoa(result.length(), lenBuf, 10);
     log_debug(respLenHead + respLen);
-    
+
     String respContentHead = "Response content: ";
     log_debug(cmdContentHead + result);
   }
-  
+
   return result.substring(0, result.length() - 2);
 }
 
@@ -147,7 +150,7 @@ void update_status() {
     rawResult = control((uint8_t *)"IC:", 3);
     if (rawResult.length() == 0)
       continue;
-    
+
     // Getting power status
     char power = rawResult[MEM_PWR_IDX];
     powerAcc += !(power & POWER_AND_FLG);
@@ -155,8 +158,8 @@ void update_status() {
     // Getting water and tray status
     char resource = rawResult[MEM_RSC_IDX];
     resource = (resource >= '0' && resource <= '9')
-              ? resource - '0'
-              : resource - 'A' + 10;
+               ? resource - '0'
+               : resource - 'A' + 10;
     waterAcc += ((resource & WATER_AND_FLG) >> WATER_OFFSET);
     trayAcc += ((resource & TRAY_AND_FLG) >> TRAY_OFFSET);
     delay(100);
@@ -164,7 +167,9 @@ void update_status() {
 
   // Updating status table
   // Power
-  statusTable = powerAcc > 0
+  // Following comment is the previous checking method, not stable
+  // statusTable = powerAcc > 0
+  statusTable = powerStatus
                 ? statusTable | STS_POWER
                 : statusTable & ~STS_POWER;
 
@@ -180,7 +185,7 @@ void update_status() {
   statusTable = trayAcc > 0
                 ? statusTable | STS_TRAY
                 : statusTable & ~STS_TRAY;
-  
+
   if (is_debug()) {
     Serial.print("[DEBUG] Status table: ");
     Serial.println(statusTable, BIN);
@@ -203,5 +208,8 @@ void update_status() {
     else
       Serial.println("N.A.");
   }
-    
+}
+
+void set_power(bool status) {
+  powerStatus = status;
 }

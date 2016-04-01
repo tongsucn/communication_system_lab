@@ -7,7 +7,7 @@
 #include <Arduino.h>
 
 // Debug flag for printing debug information
-#define HACK_DEBUG
+// #define HACK_DEBUG
 
 
 /* ************************************************************************** */

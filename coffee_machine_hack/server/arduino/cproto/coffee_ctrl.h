@@ -130,5 +130,16 @@ char decode_machine(uint8_t *raw);
 */
 void update_status();
 
+/*
+   Function:      set_power
+   Description:   Setting power status of the machine, because of
+                  the unstable power status the machine provides,
+                  the only solution is to record the status by a
+                  status variable. Calling this function with a
+                  bool variable will change the power status.
+   Args:
+      status (bool): new status, true for ON, false for OFF
+*/
+void set_power(bool status);
 
 #endif _COFFEE_COM_H

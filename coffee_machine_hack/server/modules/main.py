@@ -1,131 +1,105 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
 import logging
-import json
 import os
-import time
-import datetime
-from threading import Thread
 import cherrypy
 import modules
-from modules import settings
-from modules import auth
+from modules import users
 from modules import templates
-from modules import cmachine
+from modules import cupdetection
 
-cherrypy.log.screen = False
 """
-    Global cherrypy settings. 
-    Set autoreload to True to allow reloading once python-files changed.
+    Add headers for more secure page-rendering
+    https://cherrypy.readthedocs.org/en/3.3.0/progguide/security.html
 """
-conf = {
-    'global': {
-        'server.environment': 'production',
-        'engine.autoreload.on': True,
-        'engine.autoreload.frequency': 2,
-        'server.socket_host': '0.0.0.0',  # Listen on any interface
-        'server.socket_port': 8080,
-        'tools.encode.text_only': False
-        },
-    '/': {
-        'tools.sessions.on': True,
-        'tools.auth.on': True,
-        'tools.staticdir.root': os.path.abspath("www/")
-    },
-    '/static': {
-        'tools.auth.on': False,
-        'tools.staticdir.on': True,
-        'tools.staticdir.dir': '.',
-        'tools.caching.on': True,
-        'tools.caching.delay': 3600,
-        'tools.caching.antistampede_timeout': 1,
-        'tools.gzip.on': True,
-        'tools.gzip.mime_types': ['text/*', 'application/*']
-    },
-    '/favicon.ico': {
-        'tools.staticfile.on': True,
-        'tools.staticfile.dir': os.path.abspath('www/figures/comsys.png')
-    }
-}
 
-class RestrictedArea:
-    
-    # all methods in this controller (and subcontrollers) is
-    # open only to members of the admin group
-    
-    _cp_config = {
-        'auth.require': [modules.auth.member_of('admin')]
-    }
-    
-    @cherrypy.expose
-    def index(self):
-        return """This is the admin only area."""
+
+def secureheaders():
+    headers = cherrypy.response.headers
+    headers['X-Frame-Options'] = 'DENY'
+    headers['X-XSS-Protection'] = '1; mode=block'
+    headers['Content-Security-Policy'] = "default-src='self'"
+
+cherrypy.tools.secureheaders = \
+    cherrypy.Tool('before_finalize', secureheaders, priority=60)
 
 """
     Global index-class. Maps to root (localhost:8080/).
 """
 
-class cIndex(object):
-    
-    auth = modules.auth.AuthController()
 
-    machine = cmachine.CoffeeMachine()
-    
-    restricted = RestrictedArea()
+class cIndex(object):
+    auth = modules.users.AuthController()
+    detector = cupdetection.cupDetector()
 
     def __init__(self):
-        pass
+        try:
+            from modules import cmachine
+        except ImportError as e:
+        #if 1:
+            from modules import cmachine_debug as cmachine
+            logging.warning("Couldn't import coffee-machine. Replacing with debug mockup.")
+            logging.warning(e)
+        self.machine = cmachine.CoffeeMachine()
 
-    #@staticmethod
-    #@cherrypy.expose
-    #def index(**params):
-    #    del params
-    #    return serve_file(os.path.abspath('./www/index.html'), 'text/html')
-    
     @cherrypy.expose
-    @modules.auth.require()
+    @modules.users.require()
     def index(self):
+        """ Main webApps the user will interface with """
         return templates.get_template("index.html").render()
 
-gIndex = cIndex()
+    @cherrypy.expose
+    @modules.users.require(modules.users.member_of("admin"))
+    def debug(self):
+        """ Debugging-page for cup-detection. Only available to admins. """
+        return templates.get_template("detector_debug.html").render()
 
-def webInterface():
-    logging.info("Starting Cherrypy-Engine")
-    cherrypy.quickstart(gIndex, config=conf)
-
-
-def shutdown():
-    # shut webinterface down
-    logging.info("Saving Settings")
-    settings.write("config/settings.json")
-    logging.info("Shutting down Cherrypy-Engine")
-    cherrypy.engine.exit()
+    def serverMain(self, cherrypy_config):
+        """
+            Main Server-function. Blocks until a KeyboardInterrupt is triggered (using Strg + C).
+            Handles both Server-start + system shutdown
+        """
+        logging.info('Starting cherrypy-server')
+        cherrypy_config['/']['tools.staticdir.root'] = os.path.abspath("./www")
+        try:
+            cherrypy.quickstart(self, config=cherrypy_config)
+        except KeyboardInterrupt:
+            logging.info('Terminated main-thread')
 
 """
-    Assumes that cherrypy exists + logging etc is setup.
+    Main function actually starting the system
+    Assumes that cherrypy exists, python is >3.4 + logging etc is setup.
 """
 
 
 def run():
-
+    global gIndex
     # Suppress cherrypy's logging
-    #cherrypy.log.error_log.propagate = False
+    cherrypy.log.error_log.propagate = False
     cherrypy.log.access_log.propagate = False
+    cherrypy.log.screen = False
 
+    gIndex = cIndex()
     # Execute the prepared settings-file
-    # Utilized pythons eval/exec and is therefore not completely save, but allows for great configurability
+    # Utilizes pythons eval/exec and is therefore not completely save, but allows for great configurability
+    from modules import settings
     settings.read("config/settings.default.json")
     settings.read("config/settings.json")
 
-    #logging.getLogger().setLevel(settings.loglevel)
+    gIndex.machine.update_product_list(settings.product_list)
 
-    conf['global']['server.socket_port'] = settings.webPort
+    gIndex.detector.initializeCamera()
 
+    logging.getLogger().setLevel(settings.loglevel)
 
-    Thread(target=webInterface).start()
+    gIndex.serverMain(settings.cherrypy_config)
 
-    try:
-        while True:
-            time.sleep(0.1)
-    except KeyboardInterrupt:
-        shutdown()
+    # if serverMain exits the system should shut-down
+    # Notify all subsystems
+    logging.info("Saving Settings")
+    settings.write("config/settings.json")
+    gIndex.detector.shutdown()
+    gIndex.machine.shutdown()
+    logging.info("Shutting down Cherrypy-Engine")
+    cherrypy.engine.exit()

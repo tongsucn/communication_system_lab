@@ -1,6 +1,5 @@
 
 <style>
-
 .status-card-machine.mdl-card {
   width: 100%;
   background: #3E4EB8;
@@ -24,6 +23,15 @@
 .status-card-machine > .mdl-card__actions > .mdl-button {
   color: #fff;
 }
+
+.mdl-dialog {
+  width: 80vw !important;
+}
+
+.coffeeImage {
+  width: auto;
+  height: 50vh !important;
+}
 </style>
 
 <div class="status-card-machine mdl-card mdl-color--brown-600 mdl-shadow--2dp">
@@ -36,18 +44,71 @@
   </div>
 </div>
 
+<dialog class="mdl-dialog" id="invalid-cup-dialog">
+    <div class="mdl-dialog__content">
+        <p id='cup-unsure' class='hidden cond-msg'>
+            We could not determine 100% if there is a cup available in the machine. Please check the following image:
+        </p>
+        <p id="cup-message" class="hidden cond-msg">
+            No cup found under the machine. Please supply a new cup.
+        </p>
+        <img class="coffeeImage" id="frame">
+        <p>
+            Please be aware that if there is no cup and you start a brewing process, you'll have to take care of the resulting mess.
+        </p>
+    </div>
+    <div class="mdl-dialog__actions">
+        <button type="button" id="continue-brew" class="mdl-button mdl-js-button mdl-button--colored">Brew</button>
+        <button type="button" id="dismiss-brew" class="mdl-button mdl-js-button mdl-button--colored">Dismiss</button>
+    </div>
+</dialog>
+
+
+<dialog class="mdl-dialog" id="invalid-conditions-dialog">
+    <div class="mdl-dialog__content">
+        <p id="tray-message" class="hidden cond-msg">
+            The tray was removed from the machine. Please reinsert it before brewing.
+        </p>
+        <p id="beans-message" class="hidden cond-msg">
+            There are no beans left in the machine. Please refill.
+        </p>
+        <p id="water-message" class="hidden cond-msg">
+            The water tank in the machine is empty. Please refill it.
+        </p>
+        <p id="machine-message" class="hidden cond-msg">
+            The machine is not turned on. Please toggle the Machine-Status.
+        </p>
+        <p id="cup-message" class="hidden cond-msg">
+            No cup found under the machine. Please supply a new cup.
+        </p>
+    <div class="mdl-dialog__actions">
+        <button type="button" id="dismiss-warning" class="mdl-button mdl-js-button mdl-button--colored">Dismiss</button>
+    </div>
+    </div>
+</dialog>
+
 <script>
 var updateTimeout;
 var machineStatus;
 
 function getStatusEntry(name, status, x) {
   return $('<div>', {
-    'class': 'machine-status-entry mdl-card__actions mdl-card--border mdl-color--' + (x ? 'green': 'red') + (status ? '' : '-100'),
+    'class': 'machine-status-entry mdl-card__actions mdl-card--border mdl-color--' + (x == '1' ? 'green': 'red') + (status ? '' : '-100'),
+    'id': 'status-entry-' + name,
     'html': $('<a>', {
       'class': 'mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect',
       'html': name
     }).attr('disabled', '')
-  }).append('<div class="mdl-layout-spacer"></div><i class="material-icons">' + (x ? 'done' : 'block') + '</i>')
+  }).append('<div class="mdl-layout-spacer"></div><i class="material-icons">' + (x == '1' ? 'done' : (x == '0'? 'block' : 'priority_high')) + '</i>')
+}
+
+function insertStatusEntry(name, status, x) {
+  var entry = getStatusEntry(name, status, x);
+  if ($('#status-entry-' + name).length == 0) {
+    entry.insertAfter('#status-main');
+  } else {
+    $('#status-entry-' + name).replaceWith(entry);
+  }
 }
 
 function updateStatus() {
@@ -57,6 +118,10 @@ function updateStatus() {
     }
     $.getJSON("/machine/get", function (data) {
         machineStatus = data;
+        $.get('/detector/hasCup', function (data) {
+          machineStatus.cupStatus = data;
+          insertStatusEntry("Cup", machineStatus.status, data);
+        });
         var shade = '';
         if (data.status) {
           $('#status-icon').html('done_all');
@@ -64,23 +129,39 @@ function updateStatus() {
           shade = '-100';
           $('#status-icon').html('block');
         }
-        $('.machine-status-entry').remove();
-        $(getStatusEntry("Water", data.status, data.has_water)).insertAfter($('#status-main'));
-        $(getStatusEntry("Beans", data.status, data.has_bean)).insertAfter($('#status-main'));
-        $(getStatusEntry("Creme", data.status, data.has_creme)).insertAfter($('#status-main'));
-        $(getStatusEntry("Tray", data.status, data.has_tray)).insertAfter($('#status-main'));
+        insertStatusEntry("Water", data.status, data.has_water);
+        insertStatusEntry("Beans", data.status, data.has_bean);
+        insertStatusEntry("Tray", data.status, data.has_tray);
         var difference = new Date() - now;
-        updateTimeout = setTimeout(updateStatus, Math.max(1000 - difference, 100));
-    }).fail(function () {updateTimeout = setTimeout(updateStatus, 5000); });
+        updateTimeout = setTimeout(updateStatus, Math.max(5000 - difference, 100));
+    }).fail(function () {updateTimeout = setTimeout(updateStatus, 15000); });
 }
+
+
 $(document).ready(function () {
   updateStatus();
 
+  $('#dismiss-brew').click(function () {
+    $('#invalid-cup-dialog')[0].close();
+  });
+  $('#dismiss-warning').click(function () {
+    $('#invalid-conditions-dialog')[0].close();
+  });
+  $('#continue-brew').click(function () {
+    if (queuedProduct) {
+      makeProduct(queuedProduct);
+      queuedProduct = undefined;
+    }
+    $('#invalid-cup-dialog')[0].close();
+  });
+
   $('#power-toggle').click(function () {
     if (machineStatus.status) {
-      $.getJSON('/machine/turn_off', function () { updateStatus(); });
+      $.getJSON('/machine/turn', {status: 'OFF'}, function () { updateStatus(); });
+      updateStatus();  
     } else {
-      $.getJSON('/machine/turn_on', function () { updateStatus(); });
+      $.getJSON('/machine/turn', {status: 'ON'}, function () { updateStatus(); });
+      updateStatus();  
     }
   });
 });

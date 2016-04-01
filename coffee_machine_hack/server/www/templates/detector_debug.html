@@ -1,0 +1,50 @@
+<%include file="header.html"/>
+
+<body>
+<style>
+.debugImage {
+	height: calc(50vh - 16px);
+	width: calc(50vw - 16px);
+}
+</style>
+
+<script>
+var imageUpdateTimeout;
+
+function updateStatus() {
+    var now = new Date();
+    if (imageUpdateTimeout) {
+        clearTimeout(imageUpdateTimeout);
+    }
+    $.each($('.debugImage'), function (k, v) {
+    	$(v).attr('src', 'detector/getImage?frameId=' + $(v).attr('id') + '&t=' + new Date().getTime());
+    });
+    var difference = new Date() - now;
+	imageUpdateTimeout = setTimeout(updateStatus, Math.max(2000 - difference, 100));
+}
+imageUpdateTimeout = setTimeout(updateStatus, 2000);
+
+</script>
+
+	<div class="layout-transparent mdl-layout mdl-js-layout">
+		<main class="mdl-layout__content">
+			<div class="mdl-grid mdl-fullsize">
+				<div class="mdl-cell mdl-cell--6-col mdl-cell--6-col-tablet mdl-cell--6-col-phone">
+					<img class="debugImage" id="frame" src="detector/getImage?frameId=frame&t=0">
+				</div>
+				<div class="mdl-cell mdl-cell--6-col mdl-cell--6-col-tablet mdl-cell--6-col-phone">
+					<img class="debugImage" id="updateMask" src="detector/getImage?frameId=updateMask&t=0">
+				</div>
+				<div class="mdl-cell mdl-cell--6-col mdl-cell--6-col-tablet mdl-cell--6-col-phone">
+					<img class="debugImage" id="fgmask" src="detector/getImage?frameId=fgmask&t=0">
+				</div>
+				<div class="mdl-cell mdl-cell--6-col mdl-cell--6-col-tablet mdl-cell--6-col-phone">
+					<img class="debugImage" id="currBG" src="detector/getImage?frameId=currBG&t=0">
+				</div>
+
+			</div>
+		</main>
+	</div>
+</body>
+
+<%include file="footer.html"/>

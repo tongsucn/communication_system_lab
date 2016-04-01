@@ -1,13 +1,13 @@
 package com.example.acron.coffeeapp;
 
-import android.app.ActionBar;
-import android.graphics.Typeface;
+
+import android.content.Intent;
+
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
-import android.util.TypedValue;
-import android.view.Gravity;
-import android.view.View;
+
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -16,11 +16,10 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.GridLayout;
+import android.view.View;
 import android.widget.ImageView;
-import android.widget.TableLayout;
-import android.widget.TableRow;
 import android.widget.TextView;
+import android.widget.ToggleButton;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -31,12 +30,11 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        SharedPreferences SP = PreferenceManager.getDefaultSharedPreferences(this);
+        Communication.setSharedPreferences(SP);
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new CustomViewListener());
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -69,16 +67,6 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
         return super.onOptionsItemSelected(item);
     }
 
@@ -89,11 +77,12 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
 
         if (id == R.id.nav_coffeecontrols) {
-            // Handle the camera action
+            updateContent();
         } else if (id == R.id.nav_statistics) {
 
         } else if (id == R.id.nav_manage) {
-
+            startActivity(new Intent(this, SettingActivity.class));
+            return true;
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -102,38 +91,108 @@ public class MainActivity extends AppCompatActivity
     }
 
     public void fillContent(){
-
-
-
-
-
+        TextView txtPower = (TextView) findViewById(R.id.txtPower);
+        ImageView imgPower = (ImageView)findViewById(R.id.imgPower);
         TextView txtCup = (TextView) findViewById(R.id.txtCup);
         ImageView imgCup = (ImageView) findViewById(R.id.imgCup);
-        ImageView imgCupAv = (ImageView) findViewById(R.id.imgCupStatus);
+        TextView txtBeans = (TextView) findViewById(R.id.txtBeans);
+        ImageView imgBeans = (ImageView) findViewById(R.id.imgBeans);
         TextView txtWater = (TextView) findViewById(R.id.txtWater);
         ImageView imgWater = (ImageView) findViewById(R.id.imgWater);
-        ImageView imgWaterAv = (ImageView) findViewById(R.id.imgWaterStatus);
         TextView txtTray = (TextView) findViewById(R.id.txtTray);
         ImageView imgTray = (ImageView) findViewById(R.id.imgTray);
-        ImageView imgTrayAv = (ImageView) findViewById(R.id.imgTrayStatus);
 
-
+        txtPower.setText("Machine status: ");
+        imgPower.setBackgroundResource(R.mipmap.ic_power);
         txtCup.setText("Cup detection: ");
         imgCup.setBackgroundResource(R.mipmap.ic_cup);
-        imgCupAv.setBackgroundResource(Communication.getCup() ? R.mipmap.ic_cm : R.mipmap.ic_x);
-
-
-
+        txtBeans.setText("Bean status: ");
+        imgBeans.setBackgroundResource(R.mipmap.ic_beans);
         txtWater.setText("Water tank status: ");
         imgWater.setBackgroundResource(R.mipmap.ic_water);
-        imgWaterAv.setBackgroundResource(Communication.getWaterTank() ? R.mipmap.ic_cm : R.mipmap.ic_x);
-
-
         txtTray.setText("Drip tray status: ");
         imgTray.setBackgroundResource(R.mipmap.ic_tray);
-        imgTrayAv.setBackgroundResource(Communication.getWaterTank() ? R.mipmap.ic_cm : R.mipmap.ic_x);
 
+        String[] products = Communication.getProductList();
+        ToggleButton tB;
+        switch(products.length){
+            case 6:{
+                tB = (ToggleButton) findViewById(R.id.btnProd6);
+                tB.setText(products[5]);
+                tB.setTextOff(products[5]);
+                tB.setTextOn(products[5]);
+                tB.setVisibility(View.VISIBLE);
+            }
+            case 5:{
+                tB = (ToggleButton) findViewById(R.id.btnProd5);
+                tB.setText(products[4]);
+                tB.setTextOff(products[4]);
+                tB.setTextOn(products[4]);
+                tB.setVisibility(View.VISIBLE);
+            }
+            case 4:{
+                tB = (ToggleButton) findViewById(R.id.btnProd4);
+                tB.setText(products[3]);
+                tB.setTextOff(products[3]);
+                tB.setTextOn(products[3]);
+                tB.setVisibility(View.VISIBLE);
+            }
+            case 3:{
+                tB = (ToggleButton) findViewById(R.id.btnProd3);
+                tB.setText(products[2]);
+                tB.setTextOff(products[2]);
+                tB.setTextOn(products[2]);
+                tB.setVisibility(View.VISIBLE);
+            }
+            case 2:{
+                tB = (ToggleButton) findViewById(R.id.btnProd2);
+                tB.setText(products[1]);
+                tB.setTextOff(products[1]);
+                tB.setTextOn(products[1]);
+                tB.setVisibility(View.VISIBLE);
+            }
+            case 1:{
+                tB = (ToggleButton) findViewById(R.id.btnProd1);
+                tB.setText(products[0]);
+                tB.setTextOff(products[0]);
+                tB.setTextOn(products[0]);
+                tB.setVisibility(View.VISIBLE);
+                break;
+            }
+            default:{
 
+            }
+        }
 
+        ProductButtonListener tbl = new ProductButtonListener();
+        ToggleButton btnProd1 = (ToggleButton) findViewById(R.id.btnProd1);
+        btnProd1.setOnClickListener(tbl);
+        ToggleButton btnProd2 = (ToggleButton) findViewById(R.id.btnProd2);
+        btnProd2.setOnClickListener(tbl);
+        ToggleButton btnProd3 = (ToggleButton) findViewById(R.id.btnProd3);
+        btnProd3.setOnClickListener(tbl);
+        ToggleButton btnProd4 = (ToggleButton) findViewById(R.id.btnProd4);
+        btnProd4.setOnClickListener(tbl);
+        ToggleButton btnProd5 = (ToggleButton) findViewById(R.id.btnProd5);
+        btnProd5.setOnClickListener(tbl);
+        ToggleButton btnProd6 = (ToggleButton) findViewById(R.id.btnProd6);
+        btnProd6.setOnClickListener(tbl);
+
+        updateContent();
+    }
+
+    public void updateContent(){
+
+        ImageView imgPowerAv = (ImageView) findViewById(R.id.imgPowerStatus);
+        ImageView imgCupAv = (ImageView) findViewById(R.id.imgCupStatus);
+        ImageView imgBeansAv = (ImageView) findViewById(R.id.imgBeanStatus);
+        ImageView imgWaterAv = (ImageView) findViewById(R.id.imgWaterStatus);
+        ImageView imgTrayAv = (ImageView) findViewById(R.id.imgTrayStatus);
+
+        imgPowerAv.setBackgroundResource(Communication.getMachineStatus() ? R.mipmap.ic_cm : R.mipmap.ic_x);
+        imgCupAv.setBackgroundResource(Communication.getCup() ? R.mipmap.ic_cm : R.mipmap.ic_x);
+        imgBeansAv.setBackgroundResource(Communication.getBeans() ? R.mipmap.ic_cm : R.mipmap.ic_x);
+        imgWaterAv.setBackgroundResource(Communication.getWaterTank() ? R.mipmap.ic_cm : R.mipmap.ic_x);
+        imgTrayAv.setBackgroundResource(Communication.getTray() ? R.mipmap.ic_cm : R.mipmap.ic_x);
     }
 }

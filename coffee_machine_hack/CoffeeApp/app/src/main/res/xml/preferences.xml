@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <EditTextPreference android:title="Your Name"
+        android:key="username"
+        android:summary="Please provide your username"></EditTextPreference>
+    <EditTextPreference android:title="Server address"
+        android:key="serverIP"
+        android:summary="Please provide the coffee server IP"></EditTextPreference>
+    <CheckBoxPreference android:title="Connect to Convenience"
+        android:defaultValue="false"
+        android:summary="This option is planned for the future."
+        android:key="applicationUpdates" />
+    <ListPreference     android:title="Statistic Details"
+        android:summary="Select your preferred type of statistics"
+        android:key="statisticType"
+        android:defaultValue="1"
+        android:entries="@array/listArray"
+        android:entryValues="@array/listValues" />
+</PreferenceScreen>

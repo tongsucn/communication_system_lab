@@ -4,11 +4,7 @@
 	<style>
 		.layout-background {
 			background: url('/static/figures/coffee_background.png') no-repeat center 0 / cover;
-			width: 100vw;
-			height: 50vh;
-			min-height: 400px;
-			max-height: 550px;
-			position: absolute;
+			flex-grow: 0;
 		}
 		.layout-transparent .mdl-layout__header,
 		.layout-transparent .mdl-layout__drawer-button {
@@ -35,169 +31,313 @@
 			}
 		}
 
-		.height-anchored {
-			position: absolute;
+	
+		.user-avatar {
+			font-size: 48px;
+			border-radius: 24px;
+			padding-bottom: 12px;
+		}
+
+		.end-flex {
+		  	box-sizing: border-box;
+		  	display: -webkit-flex;
+		  	display: -ms-flexbox;
+		  	display: flex;
+		    -webkit-flex-direction: column;
+		    -ms-flex-direction: column;
+            flex-direction: column;
+            -webkit-justify-content: flex-end;
+            -ms-flex-pack: end;
+            justify-content: flex-end;
+		}
+
+		.overflow-table {
+			overflow-x: hidden;
+			overflow-y: auto;
+			min-height: 200px;
+		}
+
+		@media screen and (min-width: 1024px) {
+			.overflow-table {
+				height: calc(50vh - 100px);
+			}
+		}
+
+
+		@media screen and (min-width: 840px) {
+			.layout-background {
+				height: 361px;
+			}
+		}
+
+		@media(min-height: 800px) {
+			@media(min-width: 840px) {
+				.align-bottom {
+					position: absolute;
+					bottom: 0px;
+					width: 100%;
+				}
+			}
+		}
+		@media(max-width: 480px) {
+			.mdl-btn-group-margin {
+			  margin-left: 0px !important;
+			  margin-right: 0px !important;
+			  width: 100% !important;
+			}
+		}
+
+		@media(max-width: 840px) {
+			.align-bottom {
+				position: absolute;
+				top: 408px;
+				width: 100%;
+				overflow-x:auto;
+				height:50vh;
+			}
+
+			.overflow-table {
+				padding-right: 6px;
+				overflow: inherit;
+			}
+		}
+		@media(max-height: 800px) {
+			.align-bottom {
+				position: absolute;
+				top: 408px;
+				width: 100%;
+				overflow-x:auto;
+				height:50vh;
+			}
+		}
+
+
+		.mdl-btn-group-margin {
+		  margin-top: 0px !important;
+		}
+
+		.mdl-layout--fixed-drawer > .mdl-layout__content {
+
+		}
+
+		.mdl-layout--fixed-drawer > .layout-background > .mdl-grid {
+		}
+
+		@media screen and (max-width: 1024px) {
+
+			.mdl-layout__container {
+				height: initial;
+			}
+			
+			.mdl-layout--fixed-drawer > .layout-background > .mdl-grid {
+				width: 100%;
+				padding-left: 0px;
+				padding-right: 0px;
+				display: flex;
+			}
+			.mdl-layout__container.has-scrolling-header .mdl-layout__content {
+				/*overflow-y: auto;
+				overflow-x: hidden; */
+			} 
+		}
+		.avatar-header {
+			padding: 32px 40px;
+			height: 151px;
+		}
+
+		.mdl-layout-title {
+			text-transform: capitalize;
 		}
 	</style>
 
-	<div class="layout-background">
-	</div>
-	<div class="layout-transparent mdl-layout mdl-js-layout">
-		<header class="mdl-layout__header mdl-layout__header--transparent">
-			<div class="mdl-layout__header-row">
-				<!-- Title -->
-				<span class="mdl-layout-title">ComCoffee</span>
-				<!-- Add spacer, to align navigation to the right -->
-				<div class="mdl-layout-spacer"></div>
-				<!-- Navigation -->
-				<nav class="mdl-navigation">
-					<a class="mdl-navigation__link" href="">Status</a>
-					<a class="mdl-navigation__link" href="">Statistics</a>
-					<a class="mdl-navigation__link" href="">Account</a>
-				</nav>
-			</div>
-		</header>
-		<div class="mdl-layout__drawer">
-			<span class="mdl-layout-title">AccountName</span>
+
+	<div class="layout-transparent mdl-layout--fixed-drawer mdl-layout mdl-js-layout">
+		<div class="mdl-layout__drawer mdl-color--primary mdl-color-text--white">
+			<header class="avatar-header end-flex mdl-color--brown-900 ">
+				<div class="mdl-layout-spacer "></div>
+				<i class="material-icons user-avatar">account_circle</i>
+				<span class="mdl-layout-title" id="username-display">AccountName</span>
+			</header>
+			<div class="mdl-layout-spacer"></div>
 			<nav class="mdl-navigation">
-				<a class="mdl-navigation__link" href="">Status</a>
-				<a class="mdl-navigation__link" href="">Statistics</a>
-				<a class="mdl-navigation__link" href="">Account</a>
+				<a target="#", class="mdl-navigation__link mdl-color-text--white" id="reinit">Reset Cupdetection</a>
+				<a target="_blank" class="mdl-navigation__link mdl-color-text--white hidden adminLink" href="/debug">Debug Camera</a>
+				<a class="mdl-navigation__link mdl-color-text--white" href="/auth/logout">Logout</a>
 			</nav>
 		</div>
-		<main class="mdl-layout__content">
-			<div class="mdl-grid mdl-fullsize">
-				<div class="mdl-layout-spacer"></div>
-				<div class="mdl-cell mdl-cell--5-col mdl-cell--4-col-tablet mdl-cell--4-col-phone">
-					<div class="mdl-grid mdl-fullsize">
-						<div class="mdl-cell mdl-cell--6-col mdl-cell--8-col-tablet">
-							<button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent mdl-color--brown-600 mdl-full-width" type="button" data-toggle="collapse" data-target="#help-well" aria-expanded="false" aria-controls="help-well">
-								<i class="material-icons">free_breakfast</i> 
-								Espresso
-							</button>
-						</div>
-						<div class="mdl-cell mdl-cell--6-col mdl-cell--8-col-tablet">
-							<button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent mdl-color--brown-600 mdl-full-width" type="button" data-toggle="collapse" data-target="#help-well" aria-expanded="false" aria-controls="help-well">
-								<i class="material-icons">free_breakfast</i> 
-								Coffee
-							</button>
-						</div>
-						<div class="mdl-cell mdl-cell--6-col mdl-cell--8-col-tablet">
-							<button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent mdl-color--brown-600 mdl-full-width" type="button" data-toggle="collapse" data-target="#help-well" aria-expanded="false" aria-controls="help-well">
-								<i class="material-icons">free_breakfast</i> 
-								<i class="material-icons">free_breakfast</i> 
-								Espresso
-							</button>
-						</div>
-						<div class="mdl-cell mdl-cell--6-col mdl-cell--8-col-tablet">
-							<button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent mdl-color--brown-600 mdl-full-width" type="button" data-toggle="collapse" data-target="#help-well" aria-expanded="false" aria-controls="help-well">
-								<i class="material-icons">free_breakfast</i> 
-								<i class="material-icons">free_breakfast</i> 
-								Coffee
-							</button>
-						</div>
-					</div>
+		<div class="layout-background mdl-layout__content">
+			<header class="mdl-layout__header mdl-layout__header--transparent">
+				<div class="mdl-layout__header-row">
+					<!-- Title -->
+					<span class="mdl-layout-title">ComCoffee</span>
+					<div class="mdl-layout-spacer"></div>
+				</div>
+			</header>
+			<div class="mdl-grid mdl-fullsize ">
+				<div class="mdl-layout-spacer mdl-layout--large-screen-only"></div>
+				<div class="mdl-cell mdl-cell--5-col mdl-cell--4-col-tablet mdl-cell--4-col-phone mdl-btn-group-margin">
+					<%include file="products.html"/>
 				</div>
 				<div class="mdl-cell mdl-cell--3-col mdl-cell--4-col-tablet mdl-cell--4-col-phone">
-					<div class="mdl-grid mdl-fullsize">
-						<div class="mdl-cell mdl-cell--12-col">
-							<%include file="machine_status.html"/>
-						</div>
-					</div>
+					<%include file="machine_status.html"/>
 				</div>
 			</div>
-			<div class="mdl-grid mdl-fullsize height-anchored mdl-full-width">
-				<div class="mdl-cell mdl-cell--8-col mdl-cell--4-col-tablet mdl-cell--4-col-phone">
+		</div>
+		<div class="mdl-layout__content">
+			<div class="mdl-grid mdl-fullsize mdl-full-width">
+				<div class="mdl-cell mdl-cell--8-col mdl-cell--8-col-desktop">
 					<div class="mdl-tabs mdl-js-tabs mdl-js-ripple-effect">
 						<div class="mdl-tabs__tab-bar">
-							<a href="#starks-panel" class="mdl-tabs__tab is-active">Your Stats</a>
-							<a href="#lannisters-panel" class="mdl-tabs__tab">Office Stats</a>
-							<a href="#targaryens-panel" class="mdl-tabs__tab">Miscellaneous</a>
+							<a href="#your-stats-panel" class="mdl-tabs__tab is-active">Your Stats</a>
+							<a href="#office-stats-panel" class="mdl-tabs__tab">Office Stats</a>
 						</div>
 
-						<div class="mdl-tabs__panel is-active" id="starks-panel">
-							<table class="mdl-data-table mdl-js-data-table mdl-full-width">
-								<thead>
-									<tr>
-										<th class="mdl-data-table__cell--non-numeric">Name</th>
-										<th class="mdl-data-table__cell--non-numeric">Nickname</th>
-										<th>Age</th>
-										<th class="mdl-data-table__cell--non-numeric">Living?</th>
-									</tr>
-								</thead>
-								<tbody>
-									<tr>
-										<td class="mdl-data-table__cell--non-numeric">John Lennon</td>
-										<td class="mdl-data-table__cell--non-numeric">The smart one</td>
-										<td>40</td>
-										<td class="mdl-data-table__cell--non-numeric">No</td>
-									</tr>
-									<tr>
-										<td class="mdl-data-table__cell--non-numeric">Paul McCartney</td>
-										<td class="mdl-data-table__cell--non-numeric">The cute one</td>
-										<td>73</td>
-										<td class="mdl-data-table__cell--non-numeric">Yes</td>
-									</tr>
-									<tr>
-										<td class="mdl-data-table__cell--non-numeric">George Harrison</td>
-										<td class="mdl-data-table__cell--non-numeric">The shy one</td>
-										<td>58</td>
-										<td class="mdl-data-table__cell--non-numeric">No</td>
-									</tr>
-									<tr>
-										<td class="mdl-data-table__cell--non-numeric">Ringo Starr</td>
-										<td class="mdl-data-table__cell--non-numeric">The funny one</td>
-										<td>74</td>
-										<td class="mdl-data-table__cell--non-numeric">Yes</td>
-									</tr>
-								</tbody>
-							</table>
+						<div class="mdl-tabs__panel is-active" id="your-stats-panel">
+							<div class="mdl-grid mdl-fullsize height-anchored mdl-full-width">
+								<div class="overflow-table mdl-cell mdl-cell--6-col mdl-cell--12-col-tablet mdl-cell--12-col-phone">
+									<table class="mdl-data-table mdl-js-data-table mdl-full-width">
+										<thead>
+											<tr>
+												<th class="mdl-data-table__cell--non-numeric">Name</th>
+												<th class="mdl-data-table__cell--non-numeric">Quantity</th>
+											</tr>
+										</thead>
+										<tbody id="your-counts">
+										</tbody>
+									</table>
+								</div>
+								<div class="overflow-table mdl-cell mdl-cell--6-col mdl-cell--12-col-tablet mdl-cell--12-col-phone">
+									<table class="mdl-data-table mdl-js-data-table mdl-full-width">
+										<thead>
+											<tr>
+												<th class="mdl-data-table__cell--non-numeric">Last Coffees</th>
+												<th class="mdl-data-table__cell--non-numeric">Timestamp</th>
+											</tr>
+										</thead>
+										<tbody id="your-coffees">
+										</tbody>
+									</table>
+								</div>
+							</div>
 						</div>
-						<div class="mdl-tabs__panel" id="lannisters-panel">
-							<table class="mdl-data-table mdl-js-data-table mdl-data-table--selectable mdl-full-width">
-								<thead>
-									<tr>
-										<th class="mdl-data-table__cell--non-numeric">Material</th>
-										<th>Quantity</th>
-										<th>Unit price</th>
-									</tr>
-								</thead>
-								<tbody>
-									<tr>
-										<td class="mdl-data-table__cell--non-numeric">Acrylic (Transparent)</td>
-										<td>250</td>
-										<td>$2.90</td>
-									</tr>
-									<tr>
-										<td class="mdl-data-table__cell--non-numeric">Plywood (Birch)</td>
-										<td>50</td>
-										<td>$1.25</td>
-									</tr>
-									<tr>
-										<td class="mdl-data-table__cell--non-numeric">Laminate (Gold on Blue)</td>
-										<td>10</td>
-										<td>$12.35</td>
-									</tr>
-								</tbody>
-							</table>
-						</div>
-						<div class="mdl-tabs__panel" id="targaryens-panel">
-							<ul>
-								<li>Viserys</li>
-								<li>Daenerys</li>
-							</ul>
+						<div class="mdl-tabs__panel" id="office-stats-panel">
+							<div class="mdl-grid mdl-fullsize height-anchored mdl-full-width">
+								<div class="overflow-table mdl-cell mdl-cell--6-col mdl-cell--12-col-tablet mdl-cell--12-col-phone">
+									<table class="mdl-data-table mdl-js-data-table mdl-full-width">
+										<thead>
+											<tr>
+												<th class="mdl-data-table__cell--non-numeric">Name</th>
+												<th class="mdl-data-table__cell--non-numeric">Quantity</th>
+											</tr>
+										</thead>
+										<tbody id="office-counts">
+										</tbody>
+									</table>
+								</div>
+								<div class="overflow-table mdl-cell mdl-cell--6-col mdl-cell--12-col-tablet mdl-cell--12-col-phone">
+									<table class="mdl-data-table mdl-js-data-table mdl-full-width">
+										<thead>
+											<tr>
+												<th class="mdl-data-table__cell--non-numeric">Last Coffees</th>
+												<th class="mdl-data-table__cell--non-numeric">Timestamp</th>
+												<th class="mdl-data-table__cell--non-numeric">User</th>
+											</tr>
+										</thead>
+										<tbody id="office-coffees">
+										</tbody>
+									</table>
+								</div>
+							</div>
 						</div>
 					</div>
 				</div>
-				<div class="mdl-cell mdl-cell--4-col mdl-cell--4-col-tablet mdl-cell--4-col-phone">
-					<div class="machine-container">
+				<div class="mdl-layout-spacer mdl-layout--large-screen-only"></div>
+				<div class="mdl-cell mdl-cell--2-col mdl-layout--large-screen-only">
 						<img class="machine-image" src="/static/figures/coffee_xs95_full.png">
-					</div>
 				</div>
+				<div class="mdl-layout-spacer mdl-layout--large-screen-only"></div>
 			</div>
-
-		</main>
 	</div>
 </body>
+
+<script>
+function renderLine(key, value, user) {
+	var line = $('<tr>').append($('<td>').addClass('mdl-data-table__cell--non-numeric').html(key), 
+							$('<td>').addClass('mdl-data-table__cell--non-numeric').html(value));
+	if (user) {
+		line.append($('<td>').addClass('mdl-data-table__cell--non-numeric').html(user));
+	}
+	return line;
+}
+
+function renderStats(idPrefix, values) {
+	var newTable = $('<div>');
+	$.each(values.counters, function(k, v) {
+		newTable.append(renderLine(k, v));
+	});
+	$('#' + idPrefix + '-counts').html(newTable.html());
+	newTable = $('<div>');
+	$.each(values.lastCoffees, function(k, v) {
+		var ts = new Date(v.timestamp);
+		if (ts == 'Invalid Date') {
+			ts = new Date(v.timestamp.replace(' ', 'T'));
+		}
+		newTable.prepend(renderLine(v.name, ts.toLocaleString(), v.user));
+	});
+	$('#' + idPrefix + '-coffees').html(newTable.html());
+}
+
+var statTimeoutVal = 0;
+
+function statTimeout() {
+    if (statTimeoutVal) {
+        clearTimeout(statTimeoutVal);
+    }
+    var now = new Date();
+    updateStats();
+    var difference = new Date() - now;
+    statTimeoutVal = setTimeout(statTimeout, Math.max(5000 - difference, 100));
+}
+
+function updateStats() {
+    $.getJSON('/auth/getStatistics?filterNames=0', function(data) {
+    	if (data.global) {
+    		renderStats('office', data.global);
+    	}
+    	if (data.user) {
+    		renderStats('your', data.user);	
+    	}
+    });
+}
+
+$(document).ready(function () {
+    $.getJSON('/auth/getUserData', function(data) {
+    	if (data.username) {
+    		$('#username-display').html(data.username);
+    	}
+    	/* This flag only toggles wether the UI looks like the admin-UI.
+    		Actual auth is handled inside the server. */
+    	var isAdmin = false;
+    	if (data.groups) {
+    		if ($.inArray('admin', data.groups) > -1) {
+    			isAdmin = true;
+    		}
+    	}
+    	if (isAdmin) {
+    		$('.adminLink').removeClass('hidden');
+    	} else {
+    		$('.adminLink').addClass('hidden');
+    	}
+    });
+
+    statTimeout();
+    $('#reinit').click(function(e) {
+    	e.stopPropagation();
+    	e.preventDefault();
+    	$.get('/detector/reinitialize');
+    });
+});
+
+</script>
 
 <%include file="footer.html"/>

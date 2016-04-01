@@ -1,3 +1,58 @@
 {
-    "webPort": 8080
+  "loglevel": "DEBUG",
+  "webPort": 8080,
+  "gIndex.machine.ip_address": "192.168.10.233",
+  "gIndex.machine.ip_port": 8233,
+  "gIndex.detector.resX": 1280,
+  "gIndex.detector.resY": 720,
+  "gIndex.detector.deviceId": 0,
+  "product_list": [
+        {
+            "id": 1,
+            "name": "Small Coffee"
+        },
+        {
+            "id": 2,
+            "name": "Big Coffee"
+        },
+        {
+            "id": 3,
+            "name": "Espresso"
+        },
+        {
+            "id": 4,
+            "name": "2 Espresso"
+        }
+  ],
+  "cherrypy_config": {
+    "global": {
+      "server.environment": "production",
+      "engine.autoreload.on": true,
+      "engine.autoreload.frequency": 2,
+      "server.socket_host": "0.0.0.0",
+      "server.socket_port": 8080,
+      "tools.encode.text_only": false
+    },
+    "/": {
+      "tools.sessions.on": true,
+      "tools.auth.on": true
+    },
+    "/static": {
+      "tools.auth.on": false,
+      "tools.staticdir.on": true,
+      "tools.staticdir.dir": ".",
+      "tools.caching.on": true,
+      "tools.caching.delay": 3600,
+      "tools.caching.antistampede_timeout": 1,
+      "tools.gzip.on": true,
+      "tools.gzip.mime_types": [
+        "text/*",
+        "application/*"
+      ]
+    },
+    "/favicon.ico": {
+      "tools.staticfile.on": true,
+      "tools.staticfile.dir": "./www/figures/comsys.png"
+    }
+  }
 }

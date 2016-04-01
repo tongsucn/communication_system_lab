@@ -1,4 +1,5 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
 import os
 import os.path
@@ -11,6 +12,14 @@ from logging import handlers
              Main
    =========================
 """
+
+"""
+    Verify that we're running python > 3.4 and cherrypy is available.
+    We might get away with any Python 3 Version, development + testing happened under 3.4/5 though.
+    So just make sure thats available.
+"""
+
+
 def check_python():
     python_Version = sys.version_info
     return python_Version.major >= 3 and python_Version.minor >= 4
@@ -31,10 +40,16 @@ def check_cherrypy():
     return True
 
 if __name__ == '__main__':
+    # Initializing logging
+    # Create log_path
+    log_path = './log'
+    if not os.path.exists(log_path):
+        os.mkdir(log_path)
+
     # Set root directory to script directory, to allow execution from anywhere
     # (Needs to happen before modules import, since __init__'s of some modules already use relative paths)
     scriptDir = os.path.dirname(sys.argv[0])
-    logFile = "server.log"
+    logFile = os.path.join(log_path, 'server.log')
     if scriptDir:
         logging.debug("Setting root dir to " + scriptDir)
         os.chdir(scriptDir)
